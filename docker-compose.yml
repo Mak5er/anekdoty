@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./joke-site-backend
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./joke-site-frontend
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+
