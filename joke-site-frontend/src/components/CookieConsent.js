@@ -1,6 +1,5 @@
-// src/components/CookieConsent.js
 import React, { useState, useEffect } from 'react';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Link, Typography } from '@mui/material';
 
 const CookieConsent = ({ onAccept, onReject }) => {
     const [open, setOpen] = useState(false);
@@ -29,7 +28,12 @@ const CookieConsent = ({ onAccept, onReject }) => {
         <Dialog open={open} onClose={() => setOpen(false)}>
             <DialogTitle>Cookie Consent</DialogTitle>
             <DialogContent>
-                <p>We use cookies to improve your experience on our site. Do you accept the use of cookies?</p>
+                <Typography variant="body1">
+                    We use cookies to improve your experience on our site. By accepting cookies, you accept our{' '}
+                    <Link href="/privacy-policy" target="_blank" rel="noopener">
+                        Privacy Policy
+                    </Link>.
+                </Typography>
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleReject} color="primary">

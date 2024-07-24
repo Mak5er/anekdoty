@@ -11,6 +11,7 @@ import {API_BASE_URL} from "./config";
 
 const Home = lazy(() => import('./pages/Home'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
 const App = () => {
     const [theme, setTheme] = useState(darkTheme);
@@ -86,6 +87,7 @@ const App = () => {
                             <Routes>
                                 <Route path="/" element={user ? <Home user={user}/> :
                                     <LoginPage onSuccess={responseGoogle} onError={responseGoogle}/>}/>
+                                <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
                             </Routes>
                         </Suspense>
                     </div>
