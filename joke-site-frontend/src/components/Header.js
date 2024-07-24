@@ -58,7 +58,6 @@ const Header = ({user, logout, toggleTheme}) => {
                               fill: theme.palette.primary.main,
                               stroke: theme.palette.primary.main
                           }}/>
-                    <Box component="span" sx={{color: 'text.primary', fontWeight: 'bold'}}>okes</Box>
                 </Link>
                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                     {user && (
