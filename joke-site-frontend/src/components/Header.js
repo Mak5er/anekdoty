@@ -70,7 +70,7 @@ const Header = ({user, logout, toggleTheme}) => {
                                 src={user?.picture} // Use URL with timestamp to force reload
                                 onClick={handleClick}
                                 sx={{marginRight: '10px'}}
-                            />
+                                loading={'lazy'}/>
                             <IconButton
                                 title="Change Theme"
                                 onClick={toggleTheme}

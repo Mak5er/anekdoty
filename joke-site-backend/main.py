@@ -1,8 +1,11 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from google.auth.transport import requests
 from google.oauth2 import id_token
-from sqlalchemy import func
+from pydantic import BaseModel
+from sqlalchemy import func, insert, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from starlette.middleware.sessions import SessionMiddleware
@@ -11,7 +14,19 @@ from starlette.requests import Request
 from config import JWT_SECRET, GOOGLE_CLIENT_ID, origins
 from database import SessionLocal, init_db, SiteUser, Joke, SentJoke, Vote
 
-app = FastAPI()
+
+async def get_db():
+    async with SessionLocal() as session:
+        yield session
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_db()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
 app.add_middleware(
@@ -21,16 +36,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-async def get_db():
-    async with SessionLocal() as session:
-        yield session
-
-
-@app.on_event("startup")
-async def startup_event():
-    await init_db()
 
 
 @app.get("/api/auth")
@@ -133,8 +138,6 @@ async def get_joke(request: Request, db: AsyncSession = Depends(get_db)):
 async def get_category_joke(request: Request, tag: str, db: AsyncSession = Depends(get_db)):
     user = request.session.get('user')
 
-    print(tag)
-
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
@@ -185,3 +188,94 @@ async def get_category_joke(request: Request, tag: str, db: AsyncSession = Depen
     await db.commit()
 
     return result
+
+
+@app.get("/api/joke/votes")
+async def return_joke_votes(request: Request, joke_id: int, db: AsyncSession = Depends(get_db)):
+    user = request.session.get('user')
+
+    print(joke_id)
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    user_email = user.get("email")
+
+    if not user_email:
+        raise HTTPException(status_code=400, detail="Email not found in session")
+
+    query = select(SiteUser).filter(SiteUser.email == user_email)
+    result = await db.execute(query)
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    likes_query = select(func.count(Vote.id)).where(Vote.joke_id == joke_id, Vote.vote_type == "like")
+    likes_result = await db.execute(likes_query)
+    likes_count = likes_result.scalar()
+
+    # Підрахунок дизлайків
+    dislikes_query = select(func.count(Vote.id)).where(Vote.joke_id == joke_id, Vote.vote_type == "dislike")
+    dislikes_result = await db.execute(dislikes_query)
+    dislikes_count = dislikes_result.scalar()
+
+    result = {"likes": likes_count, "dislikes": dislikes_count}
+
+    return result
+
+
+class VoteRequest(BaseModel):
+    joke_id: int
+    vote_type: str
+
+
+@app.post("/api/joke/votes")
+async def vote_joke(vote_request: VoteRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    user = request.session.get('user')
+    print(vote_request.joke_id)
+    print(vote_request.vote_type)
+
+    joke_id = vote_request.joke_id
+    vote_type = vote_request.vote_type
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    user_email = user.get("email")
+
+    if not user_email:
+        raise HTTPException(status_code=400, detail="Email not found in session")
+
+    query = select(SiteUser).filter(SiteUser.email == user_email)
+    result = await db.execute(query)
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_id = user.id
+
+    # Get the user's existing vote
+    stmt = select(Vote.vote_type).where(Vote.joke_id == joke_id, Vote.user_id == user_id)
+    result = await db.execute(stmt)
+    existing_vote = result.scalars().first()
+
+    if existing_vote == vote_type:
+        # Remove the vote
+        stmt = delete(Vote).where(Vote.joke_id == joke_id, Vote.user_id == user_id)
+        await db.execute(stmt)
+        await db.commit()
+        return {"detail": f"Removed {vote_type} from joke", "action": "removed"}
+    elif existing_vote:
+        # Update the vote
+        stmt = update(Vote).where(Vote.joke_id == joke_id, Vote.user_id == user_id).values(vote_type=vote_type)
+        await db.execute(stmt)
+        await db.commit()
+        return {"detail": f"Updated vote to {vote_type}", "action": "updated"}
+    else:
+        # Add a new vote
+        stmt = insert(Vote).values(joke_id=joke_id, user_id=user_id, vote_type=vote_type)
+        await db.execute(stmt)
+        await db.commit()
+        return {"detail": f"Added {vote_type} to joke", "action": "added"}

@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Link, Typography } from '@mui/material';
+import React, { useEffect, useState } from 'react';
+import { Button, DialogActions, Link, Typography, Paper } from '@mui/material';
 
 const CookieConsent = ({ onAccept, onReject }) => {
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
-        // Check if the user has already responded to the cookie consent
         const consentGiven = localStorage.getItem('cookieConsent');
-        if (!consentGiven) {
+        if (consentGiven !== 'accepted') {
             setOpen(true);
         }
     }, []);
@@ -24,17 +23,33 @@ const CookieConsent = ({ onAccept, onReject }) => {
         onReject();
     };
 
+    if (!open) return null;
+
     return (
-        <Dialog open={open} onClose={() => setOpen(false)}>
-            <DialogTitle>Cookie Consent</DialogTitle>
-            <DialogContent>
-                <Typography variant="body1">
-                    We use cookies to improve your experience on our site. By accepting cookies, you accept our{' '}
-                    <Link href="/privacy-policy" target="_blank" rel="noopener">
-                        Privacy Policy
-                    </Link>.
-                </Typography>
-            </DialogContent>
+        <Paper
+            sx={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                margin: 2,
+                padding: 2,
+                width: 'calc(100% - 16px)',
+                maxWidth: '320px',
+                zIndex: 1301,
+                '@media (min-width: 600px)': {
+                    width: 'auto',
+                    maxWidth: '320px',
+                },
+            }}
+        >
+            <Typography variant="h6">Cookie Policy</Typography>
+            <Typography variant="body1">
+                We use cookies to improve your experience on our site. By accepting cookies, you accept our{' '}
+                <Link href="/privacy-policy" target="_blank" rel="noopener">
+                    Privacy Policy
+                </Link>.
+            </Typography>
             <DialogActions>
                 <Button onClick={handleReject} color="primary">
                     Reject
@@ -43,7 +58,7 @@ const CookieConsent = ({ onAccept, onReject }) => {
                     Accept
                 </Button>
             </DialogActions>
-        </Dialog>
+        </Paper>
     );
 };
 
