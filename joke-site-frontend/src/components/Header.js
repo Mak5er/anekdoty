@@ -1,18 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Avatar from '@mui/material/Avatar';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import Box from '@mui/material/Box';
-import {IconButton, useTheme} from '@mui/material';
-import {DarkMode, LightMode} from '@mui/icons-material';
+import {AppBar, Avatar, Box, Button, IconButton, Menu, MenuItem, Toolbar, Typography, useTheme} from '@mui/material';
+import {DarkMode, History, Home, LightMode, Menu as MenuIcon} from '@mui/icons-material';
 import {Link} from 'react-router-dom';
 import {ReactComponent as Logo} from '../images/logo.svg';
 
 const Header = ({user, logout, toggleTheme}) => {
     const [anchorEl, setAnchorEl] = useState(null);
+    const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [isScrolled, setIsScrolled] = useState(false);
     const theme = useTheme();
 
@@ -24,6 +18,16 @@ const Header = ({user, logout, toggleTheme}) => {
     // Handle menu close
     const handleClose = () => {
         setAnchorEl(null);
+    };
+
+    // Handle hamburger menu click
+    const handleMenuClick = (event) => {
+        setMenuAnchorEl(event.currentTarget);
+    };
+
+    // Handle hamburger menu close
+    const handleMenuClose = () => {
+        setMenuAnchorEl(null);
     };
 
     // Handle scroll event to add shadow to AppBar
@@ -49,16 +53,26 @@ const Header = ({user, logout, toggleTheme}) => {
             }}
         >
             <Toolbar sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                <Link to="/" style={{display: 'flex', alignItems: 'center', textDecoration: 'none'}}>
-                    <Logo alt="Logo"
-                          style={{
-                              height: '40px',
-                              width: 'auto',
-                              marginRight: '8px',
-                              fill: theme.palette.primary.main,
-                              stroke: theme.palette.primary.main
-                          }}/>
-                </Link>
+                <Box sx={{display: 'flex', alignItems: 'center'}}>
+                    <Link to="/" style={{display: 'flex', alignItems: 'center', textDecoration: 'none'}}>
+                        <Logo alt="Logo"
+                              style={{
+                                  height: '40px',
+                                  width: 'auto',
+                                  marginRight: '8px',
+                                  fill: theme.palette.primary.main,
+                                  stroke: theme.palette.primary.main
+                              }}/>
+                    </Link>
+                    <Box sx={{display: {xs: 'none', md: 'flex'}, alignItems: 'center'}}>
+                        <Button component={Link} to="/" sx={{color: 'text.primary', mr: 2}} startIcon={<Home/>}>
+                            Home
+                        </Button>
+                        <Button component={Link} to="/history" sx={{color: 'text.primary', mr: 2}} startIcon={<History/>}>
+                            History
+                        </Button>
+                    </Box>
+                </Box>
                 <Box sx={{display: 'flex', alignItems: 'center'}}>
                     {user && (
                         <Box sx={{display: 'flex', alignItems: 'center'}}>
@@ -80,6 +94,30 @@ const Header = ({user, logout, toggleTheme}) => {
                             </IconButton>
                         </Box>
                     )}
+                    <IconButton
+                        edge="end"
+                        color="inherit"
+                        aria-label="menu"
+                        onClick={handleMenuClick}
+                        sx={{display: {xs: 'block', md: 'none'}}}
+                    >
+                        <MenuIcon/>
+                    </IconButton>
+                    <Menu
+                        anchorEl={menuAnchorEl}
+                        open={Boolean(menuAnchorEl)}
+                        onClose={handleMenuClose}
+                    >
+                        <MenuItem component={Link} to="/" onClick={handleMenuClose}>
+                            <Home sx={{marginRight: '10px'}}/> Home
+                        </MenuItem>
+                        <MenuItem component={Link} to="/history" onClick={handleMenuClose}>
+                            <History sx={{marginRight: '10px'}}/> History
+                        </MenuItem>
+                        <MenuItem onClick={logout}>
+                            Logout
+                        </MenuItem>
+                    </Menu>
                 </Box>
                 <Menu
                     anchorEl={anchorEl}
@@ -87,7 +125,6 @@ const Header = ({user, logout, toggleTheme}) => {
                     onClose={handleClose}
                     onClick={handleClose}
                 >
-                    <MenuItem component={Link} to='/history'>History</MenuItem>
                     <MenuItem onClick={logout}>Logout</MenuItem>
                 </Menu>
             </Toolbar>

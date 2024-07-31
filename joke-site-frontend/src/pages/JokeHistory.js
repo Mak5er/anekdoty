@@ -66,7 +66,7 @@ const JokeHistory = () => {
             pt: '9rem',
 
         }}>
-            <Typography variant="h3" color='primary.main'>
+            <Typography variant="h3" color='text.primary'>
                 <strong>Історія</strong>
             </Typography>
             <Box pt='2rem'>

@@ -8,10 +8,9 @@ from pydantic import BaseModel
 from sqlalchemy import func, insert, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.sql.expression import distinct
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
-from sqlalchemy.orm import joinedload
-from sqlalchemy.sql.expression import distinct
 
 from config import JWT_SECRET, GOOGLE_CLIENT_ID, origins
 from database import SessionLocal, init_db, SiteUser, Joke, SentJoke, Vote
@@ -287,12 +286,13 @@ class JokeHistoryItem(BaseModel):
     id: int
     text: str
 
+
 @app.get("/api/joke/history")
 async def get_joke_history(
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-    skip: int = Query(0, alias="offset"),
-    limit: int = Query(10),
+        request: Request,
+        db: AsyncSession = Depends(get_db),
+        skip: int = Query(0, alias="offset"),
+        limit: int = Query(10),
 ):
     user = request.session.get('user')
 
@@ -326,4 +326,3 @@ async def get_joke_history(
     result = [JokeHistoryItem(id=joke[0], text=joke[1]) for joke in jokes]
 
     return result
-
