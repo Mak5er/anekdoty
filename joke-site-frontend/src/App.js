@@ -10,6 +10,7 @@ import axios from "axios";
 import {API_BASE_URL} from "./config";
 
 const Home = lazy(() => import('./pages/Home'));
+const JokeHistory = lazy(() => import('./pages/JokeHistory'));
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 
@@ -88,6 +89,7 @@ const App = () => {
                                 <Route path="/" element={user ? <Home user={user}/> :
                                     <LoginPage onSuccess={responseGoogle} onError={responseGoogle}/>}/>
                                 <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
+                                <Route path="/history" element={<JokeHistory/>} />
                             </Routes>
                         </Suspense>
                     </div>

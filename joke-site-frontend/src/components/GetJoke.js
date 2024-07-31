@@ -97,7 +97,7 @@ const GetJoke = ({joke, setJoke, newJoke, votes, fetchVotes}) => {
                         <IconButton color="primary" onClick={() => handleVote('like')}>
                             <ThumbUpIcon/>
                         </IconButton>
-                        <Typography variant="body2" display="inline" sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
+                        <Typography color={theme.palette.text.primary} variant="body2" display="inline" sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
                             {votes.likes}
                         </Typography>
                     </Grid>
@@ -105,7 +105,7 @@ const GetJoke = ({joke, setJoke, newJoke, votes, fetchVotes}) => {
                         <IconButton color="primary" onClick={() => handleVote('dislike')}>
                             <ThumbDownIcon/>
                         </IconButton>
-                        <Typography variant="body2" display="inline" sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
+                        <Typography color={theme.palette.text.primary} variant="body2" display="inline" sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
                             {votes.dislikes}
                         </Typography>
                     </Grid>

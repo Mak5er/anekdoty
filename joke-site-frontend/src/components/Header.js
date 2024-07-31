@@ -87,6 +87,7 @@ const Header = ({user, logout, toggleTheme}) => {
                     onClose={handleClose}
                     onClick={handleClose}
                 >
+                    <MenuItem component={Link} to='/history'>History</MenuItem>
                     <MenuItem onClick={logout}>Logout</MenuItem>
                 </Menu>
             </Toolbar>

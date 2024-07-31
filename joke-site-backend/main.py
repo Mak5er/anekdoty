@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from google.auth.transport import requests
 from google.oauth2 import id_token
@@ -10,6 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
+from sqlalchemy.orm import joinedload
+from sqlalchemy.sql.expression import distinct
 
 from config import JWT_SECRET, GOOGLE_CLIENT_ID, origins
 from database import SessionLocal, init_db, SiteUser, Joke, SentJoke, Vote
@@ -279,3 +281,49 @@ async def vote_joke(vote_request: VoteRequest, request: Request, db: AsyncSessio
         await db.execute(stmt)
         await db.commit()
         return {"detail": f"Added {vote_type} to joke", "action": "added"}
+
+
+class JokeHistoryItem(BaseModel):
+    id: int
+    text: str
+
+@app.get("/api/joke/history")
+async def get_joke_history(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    skip: int = Query(0, alias="offset"),
+    limit: int = Query(10),
+):
+    user = request.session.get('user')
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    user_email = user.get("email")
+
+    if not user_email:
+        raise HTTPException(status_code=400, detail="Email not found in session")
+
+    query = select(SiteUser).filter(SiteUser.email == user_email)
+    result = await db.execute(query)
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_id = user.id
+
+    sent_jokes_query = (
+        select(distinct(Joke.id), Joke.text)  # Ensure unique jokes by their ID
+        .join(SentJoke, SentJoke.joke_id == Joke.id)
+        .filter(SentJoke.user_id == user_id)
+        .offset(skip)
+        .limit(limit)
+    )
+    sent_jokes_result = await db.execute(sent_jokes_query)
+    jokes = sent_jokes_result.all()
+
+    result = [JokeHistoryItem(id=joke[0], text=joke[1]) for joke in jokes]
+
+    return result
+
