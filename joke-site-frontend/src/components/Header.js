@@ -31,6 +31,7 @@ import {
 import {Link} from 'react-router-dom';
 import {ReactComponent as Logo} from '../images/logo.svg';
 import axios from 'axios';
+import {API_BASE_URL} from '../config';
 
 const Header = ({user, logout, toggleTheme, fetchJokeById}) => {
     const [menuAnchorEl, setMenuAnchorEl] = useState(null);
@@ -62,7 +63,7 @@ const Header = ({user, logout, toggleTheme, fetchJokeById}) => {
         if (term.length > 2) {
             setIsLoading(true);
             try {
-                const response = await axios.get(`http://localhost:8000/api/jokes/search`, {params: {query: term}});
+                const response = await axios.get(`${API_BASE_URL}/api/jokes/search`, {params: {query: term}});
                 setSearchResults(response.data);
             } catch (error) {
                 console.error("Failed to fetch search results", error);
