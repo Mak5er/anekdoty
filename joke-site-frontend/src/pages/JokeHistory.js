@@ -16,7 +16,7 @@ const JokeHistory = () => {
     const theme = useTheme();
 
     const loadMoreJokes = useCallback(async () => {
-        if (loading || !hasMore) return; // Prevent multiple concurrent requests
+        if (loading || !hasMore) return;
         setLoading(true);
         try {
             const response = await axios.get(`${API_BASE_URL}/api/joke/history`, {
@@ -25,11 +25,10 @@ const JokeHistory = () => {
             });
 
             if (response.data.length < 10) {
-                setHasMore(false); // No more jokes to load
+                setHasMore(false);
             }
 
             setJokes(prevJokes => {
-                // Filter out duplicate jokes
                 const newJokes = response.data.filter(joke => !prevJokes.some(prevJoke => prevJoke.id === joke.id));
                 return [...prevJokes, ...newJokes];
             });

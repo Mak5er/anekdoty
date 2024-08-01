@@ -1,38 +1,14 @@
 import React, {useEffect, useState} from 'react';
-import axios from 'axios';
 import GetJoke from '../components/GetJoke';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
-import {API_BASE_URL} from "../config";
+import {useSearchParams, useNavigate} from 'react-router-dom';
 
-const Home = ({user}) => {
-    const [joke, setJoke] = useState(null);
-    const [votes, setVotes] = useState(null);
+const Home = ({user, setJoke, joke, votes, fetchVotes, fetchJoke, fetchJokeById}) => {
     const [disabled, setDisabled] = useState(false);
-
-
-    const fetchJoke = async () => {
-        try {
-            const res = await axios.get(`${API_BASE_URL}/api/joke`, {withCredentials: true});
-            if (!res.data.error) {
-                setJoke(res.data);
-                fetchVotes(res.data.id);
-            }
-        } catch (error) {
-            console.error("Failed to fetch joke:", error);
-        }
-    };
-
-    const fetchVotes = async (joke_id) => {
-        try {
-            const res = await axios.get(`${API_BASE_URL}/api/joke/votes?joke_id=${joke_id}`, {withCredentials: true});
-            if (!res.data.error) {
-                setVotes(res.data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch votes:", error);
-        }
-    };
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const [jokeLoaded, setJokeLoaded] = useState(false);
 
     const newJoke = () => {
         if (disabled) return;
@@ -44,11 +20,17 @@ const Home = ({user}) => {
     };
 
     useEffect(() => {
-        if (user) {
+        const jokeId = searchParams.get('id');
+        if (jokeId && !jokeLoaded) {
+            fetchJokeById(jokeId).then(() => {
+                setJokeLoaded(true);
+                navigate('/');
+            });
+        } else if (user && !jokeLoaded) {
             fetchJoke();
+            setJokeLoaded(true);
         }
-    }, [user]);
-
+    }, [user, searchParams, fetchJokeById, fetchJoke, jokeLoaded, navigate]);
 
     return (
         <Container sx={{

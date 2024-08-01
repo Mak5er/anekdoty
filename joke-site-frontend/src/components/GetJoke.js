@@ -1,4 +1,5 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -7,14 +8,25 @@ import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
-import {useTheme} from '@mui/material';
-import axios from "axios";
+import ShareIcon from '@mui/icons-material/Share';
+import { useTheme } from '@mui/material';
+import axios from 'axios';
 import CategoryModal from './CategoryModal';
-import {API_BASE_URL} from "../config";
+import { API_BASE_URL } from '../config';
 
-const GetJoke = ({joke, setJoke, newJoke, votes, fetchVotes}) => {
+const GetJoke = ({ joke, setJoke, newJoke, votes, fetchVotes }) => {
     const theme = useTheme();
     const [open, setOpen] = useState(false);
+    const [showCopiedMessage, setShowCopiedMessage] = useState(false);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (joke && joke.id) {
+            const url = new URL(window.location.origin);
+            url.pathname = '/joke';
+            url.searchParams.set('id', joke.id);
+            navigate(url.pathname + url.search, { replace: true });        }
+    }, [joke, navigate]);
 
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
@@ -22,7 +34,7 @@ const GetJoke = ({joke, setJoke, newJoke, votes, fetchVotes}) => {
     const handleCategorySelect = async (tag) => {
         handleClose();
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/joke/category?tag=${tag}`, {withCredentials: true});
+            const response = await axios.get(`${API_BASE_URL}/api/joke/category?tag=${tag}`, { withCredentials: true });
             if (!response.data.error) {
                 setJoke(response.data);
                 fetchVotes(response.data.id);
@@ -48,6 +60,18 @@ const GetJoke = ({joke, setJoke, newJoke, votes, fetchVotes}) => {
         }
     };
 
+    const handleShare = () => {
+        const jokeUrl = `${window.location.origin}/joke?id=${joke.id}`;
+        navigator.clipboard.writeText(jokeUrl).then(() => {
+            setShowCopiedMessage(true);
+            setTimeout(() => {
+                setShowCopiedMessage(false);
+            }, 2000);
+        }).catch((error) => {
+            console.error('Error copying URL:', error);
+        });
+    };
+
     return (
         <Container sx={{
             display: 'flex',
@@ -59,7 +83,7 @@ const GetJoke = ({joke, setJoke, newJoke, votes, fetchVotes}) => {
             <Typography variant='h3' color='secondary.main'>
                 <strong>Анекдоти <Box component='span' color='primary.main'>Українською</Box></strong>
             </Typography>
-            <Grid container justifyContent="center" sx={{pt: '2rem'}}>
+            <Grid container justifyContent="center" sx={{ pt: '2rem' }}>
                 <Grid item xs={12} md={10}>
                     <Box sx={{
                         p: 3,
@@ -71,7 +95,7 @@ const GetJoke = ({joke, setJoke, newJoke, votes, fetchVotes}) => {
                         flexDirection: 'column',
                         alignItems: 'center',
                     }}>
-                        {joke && (
+                        {joke ? (
                             <>
                                 <Typography variant="body1" sx={{
                                     color: theme.palette.text.primary,
@@ -86,6 +110,10 @@ const GetJoke = ({joke, setJoke, newJoke, votes, fetchVotes}) => {
                                     </Typography>
                                 )}
                             </>
+                        ) : (
+                            <Typography variant="body1" sx={{ color: theme.palette.text.primary, fontSize: '20px' }}>
+                                Не знайдено анекдоту
+                            </Typography>
                         )}
                     </Box>
                 </Grid>
@@ -95,19 +123,39 @@ const GetJoke = ({joke, setJoke, newJoke, votes, fetchVotes}) => {
                 <Grid container spacing={2} justifyContent="center" alignItems="center" mt={2}>
                     <Grid item>
                         <IconButton color="primary" onClick={() => handleVote('like')}>
-                            <ThumbUpIcon/>
+                            <ThumbUpIcon />
                         </IconButton>
-                        <Typography color={theme.palette.text.primary} variant="body2" display="inline" sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
+                        <Typography color={theme.palette.text.primary} variant="body2" display="inline" sx={{ verticalAlign: 'middle', marginLeft: '4px' }}>
                             {votes.likes}
                         </Typography>
                     </Grid>
                     <Grid item>
                         <IconButton color="primary" onClick={() => handleVote('dislike')}>
-                            <ThumbDownIcon/>
+                            <ThumbDownIcon />
                         </IconButton>
-                        <Typography color={theme.palette.text.primary} variant="body2" display="inline" sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
+                        <Typography color={theme.palette.text.primary} variant="body2" display="inline" sx={{ verticalAlign: 'middle', marginLeft: '4px' }}>
                             {votes.dislikes}
                         </Typography>
+                    </Grid>
+                    <Grid item sx={{ position: 'relative' }}>
+                        <IconButton color="primary" onClick={handleShare}>
+                            <ShareIcon />
+                        </IconButton>
+                        {showCopiedMessage && (
+                            <Box sx={{
+                                position: 'absolute',
+                                top: '-30px',
+                                backgroundColor: theme.palette.background.paper,
+                                borderRadius: '5px',
+                                padding: '5px 10px',
+                                boxShadow: theme.shadows[3],
+                                zIndex: 10,
+                            }}>
+                                <Typography variant="body2" color="textPrimary">
+                                    Copied to clipboard!
+                                </Typography>
+                            </Box>
+                        )}
                     </Grid>
                 </Grid>
             )}

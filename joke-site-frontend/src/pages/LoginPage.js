@@ -15,7 +15,7 @@ const LoginPage = ({onSuccess, onError}) => {
                 backgroundColor: 'default',
             }}
         >
-            <Typography variant='h3' mb='16px'><strong>SignIn please</strong></Typography>
+            <Typography variant='h3' mb='16px'><strong>Sign In</strong></Typography>
             <GoogleLogin onSuccess={onSuccess} onError={onError}/>
         </Box>
     );

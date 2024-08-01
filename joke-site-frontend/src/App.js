@@ -17,6 +17,8 @@ const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const App = () => {
     const [theme, setTheme] = useState(darkTheme);
     const [user, setUser] = useState(null);
+    const [joke, setJoke] = useState(null);
+    const [votes, setVotes] = useState(null);
 
     const toggleTheme = () => {
         setTheme(theme === lightTheme ? darkTheme : lightTheme);
@@ -55,6 +57,41 @@ const App = () => {
         }
     };
 
+    const fetchJoke = async () => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/joke`, {withCredentials: true});
+            if (!res.data.error) {
+                setJoke(res.data);
+                fetchVotes(res.data.id);
+            }
+        } catch (error) {
+            console.error("Failed to fetch joke:", error);
+        }
+    };
+
+    const fetchVotes = async (joke_id) => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/joke/votes?joke_id=${joke_id}`, {withCredentials: true});
+            if (!res.data.error) {
+                setVotes(res.data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch votes:", error);
+        }
+    };
+
+    const fetchJokeById = async (joke_id) => {
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/joke/id?joke_id=${joke_id}`, {withCredentials: true});
+            if (!res.data.error) {
+                setJoke(res.data);
+                fetchVotes(res.data.id);
+            }
+        } catch (error) {
+            console.error("Failed to fetch joke:", error);
+        }
+    };
+
     const logout = async () => {
         try {
             const res = await axios.get(`${API_BASE_URL}/api/logout`, {withCredentials: true});
@@ -65,6 +102,7 @@ const App = () => {
             console.error("Failed to logout:", error);
         }
     };
+
     const handleAcceptCookies = () => {
         console.log('Cookies accepted');
     };
@@ -82,14 +120,20 @@ const App = () => {
             <CssBaseline/>
             <Router>
                 <div className="app-container">
-                    <Header user={user} logout={logout} toggleTheme={toggleTheme}/>
+                    <Header user={user} logout={logout} fetchJokeById={fetchJokeById} setJoke={setJoke} toggleTheme={toggleTheme}/>
                     <div className="content">
                         <Suspense fallback={<LoadingSpinner/>}>
                             <Routes>
-                                <Route path="/" element={user ? <Home user={user}/> :
+                                <Route path="/" element={user ?
+                                    <Home user={user} joke={joke} setJoke={setJoke} votes={votes}
+                                          fetchVotes={fetchVotes} fetchJoke={fetchJoke} fetchJokeById={fetchJokeById}/> :
                                     <LoginPage onSuccess={responseGoogle} onError={responseGoogle}/>}/>
-                                <Route path="/privacy-policy" element={<PrivacyPolicy/>} />
-                                <Route path="/history" element={<JokeHistory/>} />
+                                <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
+                                <Route path="/history" element={<JokeHistory/>}/>
+                                <Route path="/joke" element={user ?
+                                    <Home user={user} joke={joke} setJoke={setJoke} votes={votes}
+                                          fetchVotes={fetchVotes} fetchJoke={fetchJoke} fetchJokeById={fetchJokeById}/> :
+                                    <LoginPage onSuccess={responseGoogle} onError={responseGoogle}/>}/>
                             </Routes>
                         </Suspense>
                     </div>

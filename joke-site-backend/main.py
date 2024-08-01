@@ -135,6 +135,53 @@ async def get_joke(request: Request, db: AsyncSession = Depends(get_db)):
     return result
 
 
+@app.get("/api/joke/id")
+async def get_joke(request: Request, joke_id: int, db: AsyncSession = Depends(get_db)):
+    user = request.session.get('user')
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    user_email = user.get("email")
+
+    if not user_email:
+        raise HTTPException(status_code=400, detail="Email not found in session")
+
+    query = select(SiteUser).filter(SiteUser.email == user_email)
+    result = await db.execute(query)
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_id = user.id
+
+    # Main query to get a joke that hasn't been sent to the user
+    query = (
+        select(Joke).filter(Joke.id == joke_id)
+    )
+
+    result = await db.execute(query)
+    joke = result.scalars().first()
+
+    if not joke:
+        raise HTTPException(status_code=404, detail="No jokes available")
+
+    tags_with_hash = joke.tags
+
+    if joke.tags is not None:
+        tags_with_hash = f'#{joke.tags}'
+        tags_with_hash = tags_with_hash.replace(', ', ' #')
+
+    result = {"id": joke.id, "text": joke.text, "tags": tags_with_hash}
+
+    sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
+    db.add(sent_joke)
+
+    await db.commit()
+    return result
+
+
 @app.get("/api/joke/category")
 async def get_category_joke(request: Request, tag: str, db: AsyncSession = Depends(get_db)):
     user = request.session.get('user')
@@ -326,3 +373,18 @@ async def get_joke_history(
     result = [JokeHistoryItem(id=joke[0], text=joke[1]) for joke in jokes]
 
     return result
+
+
+@app.get("/api/jokes/search")
+async def search_jokes(query: str, db: AsyncSession = Depends(get_db)):
+    if not query:
+        raise HTTPException(status_code=400, detail="Query parameter is required")
+
+    query_statement = select(Joke).filter(Joke.text.ilike(f"%{query}%"))
+    result = await db.execute(query_statement)
+    jokes = result.scalars().all()
+
+    if not jokes:
+        raise HTTPException(status_code=404, detail="No jokes found")
+
+    return [{"id": joke.id, "text": joke.text} for joke in jokes]
