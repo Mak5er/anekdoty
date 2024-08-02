@@ -28,7 +28,6 @@ const Home = () => {
         if (jokeId && !jokeLoaded) {
             fetchJokeByIdData(jokeId).then(() => {
                 setJokeLoaded(true);
-                navigate('/');
             });
         } else if (user && !jokeLoaded) {
             fetchJokeData();

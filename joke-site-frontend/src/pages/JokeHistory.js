@@ -1,9 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Typography, Container, CircularProgress } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { useUser } from '../contexts/UserContext';
-import { fetchJokeHistory } from '../utils/api';
-import { useNavigate } from 'react-router-dom';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {Box, CircularProgress, Container, Typography} from '@mui/material';
+import {useTheme} from '@mui/material/styles';
+import {useUser} from '../contexts/UserContext';
+import {fetchJokeHistory} from '../utils/api';
+import {useNavigate} from 'react-router-dom';
 
 const JokeHistory = () => {
     const [jokes, setJokes] = useState([]);
@@ -12,7 +12,7 @@ const JokeHistory = () => {
     const [page, setPage] = useState(0);
     const observer = useRef();
     const theme = useTheme();
-    const { user } = useUser();
+    const {user} = useUser();
     const navigate = useNavigate(); // Hook for navigation
 
     const loadMoreJokes = useCallback(async () => {
@@ -102,7 +102,7 @@ const JokeHistory = () => {
                         </Box>
                     );
                 })}
-                {loading && <CircularProgress />}
+                {loading && <CircularProgress/>}
             </Box>
         </Container>
     );
