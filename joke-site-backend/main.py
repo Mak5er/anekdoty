@@ -375,6 +375,38 @@ async def get_joke_history(
     return result
 
 
+@app.get("/api/joke/user_vote")
+async def get_user_vote(joke_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    user = request.session.get('user')
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    user_email = user.get("email")
+
+    if not user_email:
+        raise HTTPException(status_code=400, detail="Email not found in session")
+
+    query = select(SiteUser).filter(SiteUser.email == user_email)
+    result = await db.execute(query)
+    user = result.scalars().first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_id = user.id
+
+    # Get the user's existing vote
+    stmt = select(Vote.vote_type).where(Vote.joke_id == joke_id, Vote.user_id == user_id)
+    result = await db.execute(stmt)
+    vote = result.scalars().first()
+
+    if vote:
+        return {"vote_type": vote}
+    else:
+        return {"vote_type": None}
+
+
 @app.get("/api/jokes/search")
 async def search_jokes(query: str, db: AsyncSession = Depends(get_db)):
     if not query:

@@ -30,18 +30,20 @@ import {
 } from '@mui/icons-material';
 import {Link} from 'react-router-dom';
 import {ReactComponent as Logo} from '../images/logo.svg';
-import axios from 'axios';
-import {API_BASE_URL} from '../config';
 
-const Header = ({user, logout, toggleTheme, fetchJokeById}) => {
+import {useUser} from "../contexts/UserContext";
+import {useJoke} from "../contexts/JokeContext";
+
+const Header = ({toggleTheme}) => {
     const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [searchResults, setSearchResults] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const theme = useTheme();
     const searchRef = useRef(null);
+    const {user, logout} = useUser();
+    const {fetchJokeByIdData, searchJokesData, isLoading} = useJoke();
+    const {searchResults, setSearchResults} = useJoke();
 
 
     const handleMenuClick = (event) => {
@@ -61,22 +63,15 @@ const Header = ({user, logout, toggleTheme, fetchJokeById}) => {
         setSearchTerm(term);
 
         if (term.length > 2) {
-            setIsLoading(true);
-            try {
-                const response = await axios.get(`${API_BASE_URL}/api/jokes/search`, {params: {query: term}});
-                setSearchResults(response.data);
-            } catch (error) {
-                console.error("Failed to fetch search results", error);
-            } finally {
-                setIsLoading(false);
-            }
+            await searchJokesData(term);
         } else {
+            // Clear search results if term is less than 3 characters
             setSearchResults([]);
         }
     };
 
     const handleSearchResultClick = (joke) => {
-        fetchJokeById(joke.id);
+        fetchJokeByIdData(joke.id);
         setSearchTerm('');
         setSearchResults([]);
         setIsSearchDialogOpen(false);
@@ -138,6 +133,7 @@ const Header = ({user, logout, toggleTheme, fetchJokeById}) => {
                             </Button>
                         </Box>
                     </Box>
+
                     <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1}}>
                         {user && (
                             <Box
@@ -287,9 +283,12 @@ const Header = ({user, logout, toggleTheme, fetchJokeById}) => {
                             <MenuItem component={Link} to="/history" onClick={handleMenuClose}>
                                 <History sx={{marginRight: '10px'}}/> History
                             </MenuItem>
-                            <MenuItem onClick={handleSearchDialogOpen}>
-                                <SearchIcon sx={{marginRight: '10px'}}/> Search
-                            </MenuItem>
+                            {user && (
+                                <MenuItem onClick={handleSearchDialogOpen}>
+                                    <SearchIcon sx={{marginRight: '10px'}}/> Search
+                                </MenuItem>
+                            )}
+
 
                             {user && (
                                 <MenuItem onClick={logout}>
@@ -312,12 +311,13 @@ const Header = ({user, logout, toggleTheme, fetchJokeById}) => {
                                 <IconButton onClick={logout} color="inherit">
                                     <Logout/>
                                 </IconButton>
-                                <IconButton onClick={toggleTheme} color="inherit">
-                                    {theme.palette.mode === 'dark' ? <LightMode/> : <DarkMode/>}
-                                </IconButton>
                             </Box>
                         )}
+                        <IconButton onClick={toggleTheme} color="inherit">
+                            {theme.palette.mode === 'dark' ? <LightMode/> : <DarkMode/>}
+                        </IconButton>
                     </Box>
+
                 </Toolbar>
             </AppBar>
 

@@ -2,8 +2,11 @@ import React from 'react';
 import {GoogleLogin} from '@react-oauth/google';
 import Box from '@mui/material/Box';
 import Typography from "@mui/material/Typography";
+import {useUser} from "../contexts/UserContext";
 
-const LoginPage = ({onSuccess, onError}) => {
+const LoginPage = () => {
+    const { responseGoogle } = useUser();
+
     return (
         <Box
             sx={{
@@ -16,7 +19,7 @@ const LoginPage = ({onSuccess, onError}) => {
             }}
         >
             <Typography variant='h3' mb='16px'><strong>Sign In</strong></Typography>
-            <GoogleLogin onSuccess={onSuccess} onError={onError}/>
+            <GoogleLogin onSuccess={responseGoogle} onError={responseGoogle}/>
         </Box>
     );
 };

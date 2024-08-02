@@ -1,11 +1,9 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
-import axios from 'axios';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
-import CircularProgress from '@mui/material/CircularProgress';
-import {API_BASE_URL} from '../config';
-import {useTheme} from '@mui/material/styles';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Box, Typography, Container, CircularProgress } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { useUser } from '../contexts/UserContext';
+import { fetchJokeHistory } from '../utils/api';
+import { useNavigate } from 'react-router-dom';
 
 const JokeHistory = () => {
     const [jokes, setJokes] = useState([]);
@@ -14,22 +12,21 @@ const JokeHistory = () => {
     const [page, setPage] = useState(0);
     const observer = useRef();
     const theme = useTheme();
+    const { user } = useUser();
+    const navigate = useNavigate(); // Hook for navigation
 
     const loadMoreJokes = useCallback(async () => {
-        if (loading || !hasMore) return;
+        if (loading || !hasMore || !user) return;
         setLoading(true);
         try {
-            const response = await axios.get(`${API_BASE_URL}/api/joke/history`, {
-                params: {offset: page * 10, limit: 10},
-                withCredentials: true
-            });
+            const response = await fetchJokeHistory(page);
 
-            if (response.data.length < 10) {
+            if (response.length < 10) {
                 setHasMore(false);
             }
 
             setJokes(prevJokes => {
-                const newJokes = response.data.filter(joke => !prevJokes.some(prevJoke => prevJoke.id === joke.id));
+                const newJokes = response.filter(joke => !prevJokes.some(prevJoke => prevJoke.id === joke.id));
                 return [...prevJokes, ...newJokes];
             });
             setPage(prevPage => prevPage + 1);
@@ -38,7 +35,7 @@ const JokeHistory = () => {
         } finally {
             setLoading(false);
         }
-    }, [page, loading, hasMore]);
+    }, [page, loading, hasMore, user]);
 
     useEffect(() => {
         loadMoreJokes();
@@ -55,6 +52,10 @@ const JokeHistory = () => {
         if (node) observer.current.observe(node);
     }, [loading, hasMore, loadMoreJokes]);
 
+    const handleJokeClick = (id) => {
+        navigate(`/joke?id=${id}`);
+    };
+
     return (
         <Container sx={{
             display: 'flex',
@@ -63,7 +64,6 @@ const JokeHistory = () => {
             justifyContent: 'center',
             textAlign: 'center',
             pt: '9rem',
-
         }}>
             <Typography variant="h3" color='text.primary'>
                 <strong>Історія</strong>
@@ -76,6 +76,7 @@ const JokeHistory = () => {
                         <Box
                             key={joke.id}
                             ref={isLastJoke ? lastJokeElementRef : null}
+                            onClick={() => handleJokeClick(joke.id)}
                             sx={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -88,14 +89,20 @@ const JokeHistory = () => {
                                 borderColor: 'primary.main',
                                 borderRadius: 4,
                                 backgroundColor: theme.palette.background.default,
+                                cursor: 'pointer',
+                                transition: 'background-color 0.3s',
+                                '&:hover': {
+                                    backgroundColor: theme.palette.action.hover,
+                                },
                             }}
                         >
-                            <Typography variant="body1">{joke.text}</Typography>
-                            <Typography variant="body2" color="textSecondary">{joke.tags}</Typography>
+                            <Typography variant="body1" color={theme.palette.text.primary}>
+                                {joke.text}
+                            </Typography>
                         </Box>
                     );
                 })}
-                {loading && <CircularProgress/>}
+                {loading && <CircularProgress />}
             </Box>
         </Container>
     );
