@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -13,14 +13,26 @@ import {CircularProgress, useTheme} from '@mui/material';
 import CategoryModal from './CategoryModal';
 import {useJoke} from "../contexts/JokeContext";
 
-const GetJoke = ({newJoke}) => {
+const GetJoke = () => {
     const theme = useTheme();
     const [open, setOpen] = useState(false);
+    const [disabled, setDisabled] = useState(false);
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
     const navigate = useNavigate();
-    const {handleVoteData, votes, userVote, fetchUserVoteData} = useJoke();
-    const {joke, fetchJokeByCategoryData} = useJoke();
-    const {isJokeLoading} = useJoke();
+
+    const {
+        handleVoteData, votes, userVote, fetchUserVoteData,
+        joke, fetchJokeData, fetchJokeByCategoryData, isJokeLoading
+    } = useJoke();
+
+    const newJoke = useCallback(() => {
+        if (disabled) return;
+        setDisabled(true);
+        fetchJokeData();
+        setTimeout(() => {
+            setDisabled(false);
+        }, 1000);
+    }, [disabled, fetchJokeData]);
 
     useEffect(() => {
         if (joke && joke.id) {
@@ -28,24 +40,22 @@ const GetJoke = ({newJoke}) => {
             url.pathname = '/joke';
             url.searchParams.set('id', joke.id);
             navigate(url.pathname + url.search, {replace: true});
-
             fetchUserVoteData(joke.id);
         }
-    }, [fetchUserVoteData, joke, navigate]);
+    }, [joke, navigate, fetchUserVoteData]);
 
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-
-    const handleCategorySelect = async (tag) => {
+    const handleOpen = useCallback(() => setOpen(true), []);
+    const handleClose = useCallback(() => setOpen(false), []);
+    const handleCategorySelect = useCallback(async (tag) => {
         handleClose();
         fetchJokeByCategoryData(tag);
-    };
+    }, [fetchJokeByCategoryData, handleClose]);
 
-    const handleVote = async (voteType) => {
-        handleVoteData(joke.id, voteType)
-    };
+    const handleVote = useCallback(async (voteType) => {
+        handleVoteData(joke.id, voteType);
+    }, [handleVoteData, joke]);
 
-    const handleShare = () => {
+    const handleShare = useCallback(() => {
         const jokeUrl = `${window.location.origin}/joke?id=${joke.id}`;
         navigator.clipboard.writeText(jokeUrl).then(() => {
             setShowCopiedMessage(true);
@@ -55,6 +65,29 @@ const GetJoke = ({newJoke}) => {
         }).catch((error) => {
             console.error('Error copying URL:', error);
         });
+    }, [joke]);
+
+    const renderJokeContent = () => {
+        if (isJokeLoading) {
+            return <CircularProgress/>;
+        }
+
+        if (joke) {
+            return (
+                <>
+                    <Typography variant="body1"
+                                sx={{color: theme.palette.text.primary, fontSize: '20px'}}>{joke.text}</Typography>
+                    {joke.tags?.length > 0 && (
+                        <Typography variant="body2" sx={{color: theme.palette.text.secondary, fontSize: '16px'}}>
+                            {joke.tags}
+                        </Typography>
+                    )}
+                </>
+            );
+        }
+
+        return <Typography variant="body1" sx={{color: theme.palette.text.primary, fontSize: '20px'}}>Не знайдено
+            анекдоту</Typography>;
     };
 
     return (
@@ -78,30 +111,9 @@ const GetJoke = ({newJoke}) => {
                         textAlign: 'left',
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center',
+                        alignItems: 'center'
                     }}>
-                        {isJokeLoading ? (
-                            <CircularProgress/>
-                        ) : joke ? (
-                            <>
-                                <Typography variant="body1" sx={{
-                                    color: theme.palette.text.primary,
-                                    fontSize: '20px'
-                                }}>{joke.text}</Typography>
-                                {joke.tags && joke.tags.length > 0 && (
-                                    <Typography variant="body2" sx={{
-                                        color: theme.palette.text.secondary,
-                                        fontSize: '16px'
-                                    }}>
-                                        {joke.tags}
-                                    </Typography>
-                                )}
-                            </>
-                        ) : (
-                            <Typography variant="body1" sx={{color: theme.palette.text.primary, fontSize: '20px'}}>
-                                Не знайдено анекдоту
-                            </Typography>
-                        )}
+                        {renderJokeContent()}
                     </Box>
                 </Grid>
             </Grid>
@@ -110,26 +122,10 @@ const GetJoke = ({newJoke}) => {
                 <div></div>
             ) : votes ? (
                 <Grid container spacing={2} justifyContent="center" alignItems="center" mt={2}>
-                    <Grid item>
-                        <IconButton color={userVote === 'like' ? 'primary' : 'default'}
-                                    onClick={() => handleVote('like')}>
-                            <ThumbUpIcon/>
-                        </IconButton>
-                        <Typography color={theme.palette.text.primary} variant="body2" display="inline"
-                                    sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
-                            {votes.likes}
-                        </Typography>
-                    </Grid>
-                    <Grid item>
-                        <IconButton color={userVote === 'dislike' ? 'primary' : 'default'}
-                                    onClick={() => handleVote('dislike')}>
-                            <ThumbDownIcon/>
-                        </IconButton>
-                        <Typography color={theme.palette.text.primary} variant="body2" display="inline"
-                                    sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
-                            {votes.dislikes}
-                        </Typography>
-                    </Grid>
+                    <VoteButton type="like" count={votes.likes} active={userVote === 'like'}
+                                onClick={() => handleVote('like')}/>
+                    <VoteButton type="dislike" count={votes.dislikes} active={userVote === 'dislike'}
+                                onClick={() => handleVote('dislike')}/>
                     <Grid item sx={{position: 'relative'}}>
                         <IconButton color="primary" onClick={handleShare}>
                             <ShareIcon/>
@@ -142,7 +138,7 @@ const GetJoke = ({newJoke}) => {
                                 borderRadius: '5px',
                                 padding: '5px 10px',
                                 boxShadow: theme.shadows[3],
-                                zIndex: 10,
+                                zIndex: 10
                             }}>
                                 <Typography variant="body2" color="textPrimary">
                                     Copied to clipboard!
@@ -157,7 +153,6 @@ const GetJoke = ({newJoke}) => {
                 </Typography>
             )}
 
-
             <Grid mt={1} container spacing={2} justifyContent="center">
                 <Grid item>
                     <Button color="secondary" size="large" variant="contained" onClick={newJoke}>
@@ -171,13 +166,21 @@ const GetJoke = ({newJoke}) => {
                 </Grid>
             </Grid>
 
-            <CategoryModal
-                open={open}
-                handleClose={handleClose}
-                handleCategorySelect={handleCategorySelect}
-            />
+            <CategoryModal open={open} handleClose={handleClose} handleCategorySelect={handleCategorySelect}/>
         </Container>
     );
 };
+
+const VoteButton = ({type, count, active, onClick}) => (
+    <Grid item>
+        <IconButton color={active ? 'primary' : 'default'} onClick={onClick}>
+            {type === 'like' ? <ThumbUpIcon/> : <ThumbDownIcon/>}
+        </IconButton>
+        <Typography color='text.primary' variant="body2" display="inline"
+                    sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
+            {count}
+        </Typography>
+    </Grid>
+);
 
 export default GetJoke;

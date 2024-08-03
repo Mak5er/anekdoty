@@ -7,21 +7,13 @@ import {useUser} from "../contexts/UserContext";
 import {useJoke} from '../contexts/JokeContext';
 
 const Home = () => {
-    const [disabled, setDisabled] = useState(false);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [jokeLoaded, setJokeLoaded] = useState(false);
     const {user} = useUser();
     const {fetchJokeData, fetchJokeByIdData} = useJoke();
 
-    const newJoke = () => {
-        if (disabled) return;
-        setDisabled(true);
-        fetchJokeData();
-        setTimeout(() => {
-            setDisabled(false);
-        }, 1000);
-    };
+
 
     useEffect(() => {
         const jokeId = searchParams.get('id');
@@ -40,7 +32,7 @@ const Home = () => {
             color: 'white', display: 'flex', flexDirection: 'column', pt: '9rem',
         }}>
             <Box sx={{flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-                <GetJoke newJoke={newJoke} disabled={disabled}/>
+                <GetJoke />
             </Box>
         </Container>
     );

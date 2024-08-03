@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Box, CircularProgress, Container, Typography} from '@mui/material';
 import {useTheme} from '@mui/material/styles';
 import {useUser} from '../contexts/UserContext';
+import {useJoke} from '../contexts/JokeContext';
 import {fetchJokeHistory} from '../utils/api';
 import {useNavigate} from 'react-router-dom';
 
@@ -13,6 +14,7 @@ const JokeHistory = () => {
     const observer = useRef();
     const theme = useTheme();
     const {user} = useUser();
+    const {fetchJokeByIdData} = useJoke();
     const navigate = useNavigate(); // Hook for navigation
 
     const loadMoreJokes = useCallback(async () => {
@@ -52,9 +54,11 @@ const JokeHistory = () => {
         if (node) observer.current.observe(node);
     }, [loading, hasMore, loadMoreJokes]);
 
-    const handleJokeClick = (id) => {
+    const handleJokeClick = async (id) => {
+        await fetchJokeByIdData(id);
         navigate(`/joke?id=${id}`);
     };
+
 
     return (
         <Container sx={{

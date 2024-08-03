@@ -37,6 +37,7 @@ export const JokeProvider = ({children}) => {
     }, []);
 
     const fetchJokeByIdData = useCallback(async (joke_id) => {
+        setIsJokeLoading(true);
         try {
             const jokeData = await fetchJokeById(joke_id);
             setJoke(jokeData);
@@ -45,7 +46,7 @@ export const JokeProvider = ({children}) => {
         } catch (error) {
             console.error("Failed to fetch joke by id:", error);
         } finally {
-            setIsLoading(false);
+              setIsJokeLoading(false);
         }
     }, []);
 
