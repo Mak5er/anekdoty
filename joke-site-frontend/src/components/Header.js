@@ -325,7 +325,7 @@ const Header = ({toggleTheme}) => {
                 open={isSearchDialogOpen}
                 onClose={() => {
                     handleSearchDialogClose();
-                    setSearchTerm(''); // Clear the search term
+                    setSearchTerm('');
                 }}
                 fullWidth
                 maxWidth="sm"
@@ -337,14 +337,14 @@ const Header = ({toggleTheme}) => {
                         color: theme.palette.text.primary,
                         display: 'flex',
                         flexDirection: 'column',
-                        padding: 2
+                        padding: 2,
                     }}
                 >
                     <IconButton
                         color="inherit"
                         onClick={() => {
                             handleSearchDialogClose();
-                            setSearchTerm(''); // Clear the search term
+                            setSearchTerm('');
                         }}
                         sx={{
                             position: 'absolute',

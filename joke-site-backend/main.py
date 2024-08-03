@@ -8,7 +8,6 @@ from pydantic import BaseModel
 from sqlalchemy import func, insert, delete, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.sql.expression import distinct
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.requests import Request
 
@@ -128,10 +127,16 @@ async def get_joke(request: Request, db: AsyncSession = Depends(get_db)):
 
     result = {"id": joke.id, "text": joke.text, "tags": tags_with_hash}
 
-    sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
-    db.add(sent_joke)
+    # Check if the record already exists
+    sent_joke_query = select(SentJoke).filter(SentJoke.user_id == user_id, SentJoke.joke_id == joke.id)
+    sent_joke_result = await db.execute(sent_joke_query)
+    sent_joke = sent_joke_result.scalars().first()
 
-    await db.commit()
+    if sent_joke is None:
+        sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
+        db.add(sent_joke)
+        await db.commit()
+
     return result
 
 
@@ -157,9 +162,7 @@ async def get_joke(request: Request, joke_id: int, db: AsyncSession = Depends(ge
     user_id = user.id
 
     # Main query to get a joke that hasn't been sent to the user
-    query = (
-        select(Joke).filter(Joke.id == joke_id)
-    )
+    query = select(Joke).filter(Joke.id == joke_id)
 
     result = await db.execute(query)
     joke = result.scalars().first()
@@ -175,10 +178,16 @@ async def get_joke(request: Request, joke_id: int, db: AsyncSession = Depends(ge
 
     result = {"id": joke.id, "text": joke.text, "tags": tags_with_hash}
 
-    sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
-    db.add(sent_joke)
+    # Check if the record already exists
+    sent_joke_query = select(SentJoke).filter(SentJoke.user_id == user_id, SentJoke.joke_id == joke.id)
+    sent_joke_result = await db.execute(sent_joke_query)
+    sent_joke = sent_joke_result.scalars().first()
 
-    await db.commit()
+    if sent_joke is None:
+        sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
+        db.add(sent_joke)
+        await db.commit()
+
     return result
 
 
@@ -230,10 +239,15 @@ async def get_category_joke(request: Request, tag: str, db: AsyncSession = Depen
 
     result = {"id": joke.id, "text": joke.text, "tags": tags_with_hash}
 
-    sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
-    db.add(sent_joke)
+    # Check if the record already exists
+    sent_joke_query = select(SentJoke).filter(SentJoke.user_id == user_id, SentJoke.joke_id == joke.id)
+    sent_joke_result = await db.execute(sent_joke_query)
+    sent_joke = sent_joke_result.scalars().first()
 
-    await db.commit()
+    if sent_joke is None:
+        sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
+        db.add(sent_joke)
+        await db.commit()
 
     return result
 
@@ -361,16 +375,17 @@ async def get_joke_history(
     user_id = user.id
 
     sent_jokes_query = (
-        select(distinct(Joke.id), Joke.text)  # Ensure unique jokes by their ID
+        select(Joke.id, Joke.text)  # Select Joke.id and Joke.text
         .join(SentJoke, SentJoke.joke_id == Joke.id)
         .filter(SentJoke.user_id == user_id)
+        .order_by(SentJoke.id.desc())  # Order by the SentJoke.id in descending order
         .offset(skip)
         .limit(limit)
     )
     sent_jokes_result = await db.execute(sent_jokes_query)
     jokes = sent_jokes_result.all()
 
-    result = [JokeHistoryItem(id=joke[0], text=joke[1]) for joke in jokes]
+    result = [JokeHistoryItem(id=joke.id, text=joke.text) for joke in jokes]
 
     return result
 
