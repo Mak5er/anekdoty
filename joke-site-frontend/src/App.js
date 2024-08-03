@@ -60,7 +60,7 @@ const App = () => {
                                 </Suspense>
                             </div>
                         </div>
-                        <CookieConsent onAccept={handleAcceptCookies} onReject={handleRejectCookies}/>
+                        <CookieConsent onAccept={handleAcceptCookies} />
                     </JokeProvider>
                 </UserProvider>
             </Router>
