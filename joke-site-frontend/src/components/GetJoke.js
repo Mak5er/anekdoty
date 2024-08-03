@@ -9,7 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import ShareIcon from '@mui/icons-material/Share';
-import {CircularProgress, useTheme} from '@mui/material';
+import {Skeleton, useTheme} from '@mui/material';
 import CategoryModal from './CategoryModal';
 import {useJoke} from "../contexts/JokeContext";
 
@@ -69,14 +69,21 @@ const GetJoke = () => {
 
     const renderJokeContent = () => {
         if (isJokeLoading) {
-            return <CircularProgress/>;
+            return (
+                <>
+                    <Skeleton variant="text" width="95%" height={30}/>
+                    <Skeleton variant="text" width="100%" height={30}/>
+                    <Skeleton variant="text" width="95%" height={30}/>
+                </>
+            );
         }
 
         if (joke) {
             return (
                 <>
-                    <Typography variant="body1"
-                                sx={{color: theme.palette.text.primary, fontSize: '20px'}}>{joke.text}</Typography>
+                    <Typography variant="body1" sx={{color: theme.palette.text.primary, fontSize: '20px'}}>
+                        {joke.text}
+                    </Typography>
                     {joke.tags?.length > 0 && (
                         <Typography variant="body2" sx={{color: theme.palette.text.secondary, fontSize: '16px'}}>
                             {joke.tags}
@@ -89,6 +96,57 @@ const GetJoke = () => {
         return <Typography variant="body1" sx={{color: theme.palette.text.primary, fontSize: '20px'}}>Не знайдено
             анекдоту</Typography>;
     };
+
+    const renderVotes = () => {
+        if (isJokeLoading) {
+            return (
+                <Grid container spacing={2} justifyContent="center" alignItems="center" mt={2}>
+                    <VoteButton type="like" count={<Skeleton variant="text" width={20}/>}/>
+                    <VoteButton type="dislike" count={<Skeleton variant="text" width={20}/>}/>
+                    <Grid item sx={{position: 'relative'}}>
+                        <IconButton color="default">
+                            <ShareIcon/>
+                        </IconButton>
+                    </Grid>
+                </Grid>
+            );
+        }
+
+        if (votes) {
+            return (
+                <Grid container spacing={2} justifyContent="center" alignItems="center" mt={2}>
+                    <VoteButton type="like" count={votes.likes} active={userVote === 'like'}
+                                onClick={() => handleVote('like')}/>
+                    <VoteButton type="dislike" count={votes.dislikes} active={userVote === 'dislike'}
+                                onClick={() => handleVote('dislike')}/>
+                    <Grid item sx={{position: 'relative'}}>
+                        <IconButton color="primary" onClick={handleShare}>
+                            <ShareIcon/>
+                        </IconButton>
+                        {showCopiedMessage && (
+                            <Box sx={{
+                                position: 'absolute',
+                                top: '-30px',
+                                backgroundColor: theme.palette.background.paper,
+                                borderRadius: '5px',
+                                padding: '5px 10px',
+                                boxShadow: theme.shadows[3],
+                                zIndex: 10
+                            }}>
+                                <Typography variant="body2" color="textPrimary">
+                                    Copied to clipboard!
+                                </Typography>
+                            </Box>
+                        )}
+                    </Grid>
+                </Grid>
+            );
+        }
+
+        return <Typography variant="body1" sx={{color: theme.palette.text.primary, fontSize: '20px'}}>Не знайдено
+            реакцій</Typography>;
+    };
+
 
     return (
         <Container sx={{
@@ -118,40 +176,7 @@ const GetJoke = () => {
                 </Grid>
             </Grid>
 
-            {isJokeLoading ? (
-                <div></div>
-            ) : votes ? (
-                <Grid container spacing={2} justifyContent="center" alignItems="center" mt={2}>
-                    <VoteButton type="like" count={votes.likes} active={userVote === 'like'}
-                                onClick={() => handleVote('like')}/>
-                    <VoteButton type="dislike" count={votes.dislikes} active={userVote === 'dislike'}
-                                onClick={() => handleVote('dislike')}/>
-                    <Grid item sx={{position: 'relative'}}>
-                        <IconButton color="primary" onClick={handleShare}>
-                            <ShareIcon/>
-                        </IconButton>
-                        {showCopiedMessage && (
-                            <Box sx={{
-                                position: 'absolute',
-                                top: '-30px',
-                                backgroundColor: theme.palette.background.paper,
-                                borderRadius: '5px',
-                                padding: '5px 10px',
-                                boxShadow: theme.shadows[3],
-                                zIndex: 10
-                            }}>
-                                <Typography variant="body2" color="textPrimary">
-                                    Copied to clipboard!
-                                </Typography>
-                            </Box>
-                        )}
-                    </Grid>
-                </Grid>
-            ) : (
-                <Typography variant="body1" sx={{color: theme.palette.text.primary, fontSize: '20px'}}>
-                    Не знайдено реакцій
-                </Typography>
-            )}
+            {renderVotes()}
 
             <Grid mt={1} container spacing={2} justifyContent="center">
                 <Grid item>
@@ -171,16 +196,19 @@ const GetJoke = () => {
     );
 };
 
-const VoteButton = ({type, count, active, onClick}) => (
+
+const VoteButton = ({ type, count, active, onClick }) => (
     <Grid item>
         <IconButton color={active ? 'primary' : 'default'} onClick={onClick}>
-            {type === 'like' ? <ThumbUpIcon/> : <ThumbDownIcon/>}
+            {type === 'like' ? <ThumbUpIcon /> : <ThumbDownIcon />}
         </IconButton>
-        <Typography color='text.primary' variant="body2" display="inline"
-                    sx={{verticalAlign: 'middle', marginLeft: '4px'}}>
-            {count}
-        </Typography>
+        <Box sx={{ display: 'inline-block', marginLeft: '4px', verticalAlign: 'middle' }}>
+            <Typography color='text.primary' variant="body2" display="block">
+                {count}
+            </Typography>
+        </Box>
     </Grid>
 );
+
 
 export default GetJoke;
