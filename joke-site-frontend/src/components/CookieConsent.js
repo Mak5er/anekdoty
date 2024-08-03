@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Button, DialogActions, Link, Typography, Paper } from '@mui/material';
+import React, {useEffect, useState} from 'react';
+import {Button, DialogActions, Link, Paper, Typography} from '@mui/material';
 
-const CookieConsent = ({ onAccept, onReject }) => {
+const CookieConsent = ({onAccept}) => {
     const [open, setOpen] = useState(false);
 
     useEffect(() => {
@@ -17,11 +17,6 @@ const CookieConsent = ({ onAccept, onReject }) => {
         onAccept();
     };
 
-    const handleReject = () => {
-        localStorage.setItem('cookieConsent', 'rejected');
-        setOpen(false);
-        onReject();
-    };
 
     if (!open) return null;
 
@@ -51,9 +46,6 @@ const CookieConsent = ({ onAccept, onReject }) => {
                 </Link>.
             </Typography>
             <DialogActions>
-                <Button onClick={handleReject} color="primary">
-                    Reject
-                </Button>
                 <Button onClick={handleAccept} color="primary">
                     Accept
                 </Button>

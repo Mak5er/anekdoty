@@ -40,10 +40,6 @@ const App = () => {
         console.log('Cookies accepted');
     };
 
-    const handleRejectCookies = () => {
-        window.location.href = 'https://www.google.com';
-    };
-
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline/>
