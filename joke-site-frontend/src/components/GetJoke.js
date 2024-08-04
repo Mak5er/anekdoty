@@ -169,7 +169,7 @@ const GetJoke = () => {
                         textAlign: 'left',
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: 'center'
+                        alignItems: 'left'
                     }}>
                         {renderJokeContent()}
                     </Box>
@@ -197,12 +197,12 @@ const GetJoke = () => {
 };
 
 
-const VoteButton = ({ type, count, active, onClick }) => (
+const VoteButton = ({type, count, active, onClick}) => (
     <Grid item>
         <IconButton color={active ? 'primary' : 'default'} onClick={onClick}>
-            {type === 'like' ? <ThumbUpIcon /> : <ThumbDownIcon />}
+            {type === 'like' ? <ThumbUpIcon/> : <ThumbDownIcon/>}
         </IconButton>
-        <Box sx={{ display: 'inline-block', marginLeft: '4px', verticalAlign: 'middle' }}>
+        <Box sx={{display: 'inline-block', marginLeft: '4px', verticalAlign: 'middle'}}>
             <Typography color='text.primary' variant="body2" display="block">
                 {count}
             </Typography>
