@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     alpha,
     AppBar,
@@ -6,6 +6,7 @@ import {
     Box,
     Button,
     CircularProgress,
+    Collapse,
     Dialog,
     DialogContent,
     Divider,
@@ -16,6 +17,7 @@ import {
     MenuItem,
     Toolbar,
     Typography,
+    useMediaQuery,
     useTheme
 } from '@mui/material';
 import {
@@ -29,21 +31,29 @@ import {
     Search as SearchIcon
 } from '@mui/icons-material';
 import {Link} from 'react-router-dom';
-import {ReactComponent as Logo} from '../images/logo.svg';
+
+import {ReactComponent as LogoDesktop} from '../images/logo.svg';
+import {ReactComponent as LogoMobile} from '../images/logo-mobile.svg';
 
 import {useUser} from "../contexts/UserContext";
 import {useJoke} from "../contexts/JokeContext";
+import {useDebounce} from '../hooks/useDebounce';
 
 const Header = ({toggleTheme}) => {
     const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [isScrolled, setIsScrolled] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [searchOpen, setSearchOpen] = useState(false);
     const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
     const theme = useTheme();
-    const searchRef = useRef(null);
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
     const {user, logout} = useUser();
     const {fetchJokeByIdData, searchJokesData, isLoading} = useJoke();
     const {searchResults, setSearchResults} = useJoke();
+
+
+    const debouncedSearchTerm = useDebounce(searchTerm, 200);
 
 
     const handleMenuClick = (event) => {
@@ -58,17 +68,17 @@ const Header = ({toggleTheme}) => {
         setIsScrolled(window.scrollY > 50);
     };
 
-    const handleSearchChange = async (event) => {
-        const term = event.target.value;
-        setSearchTerm(term);
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
 
-        if (term.length > 2) {
-            await searchJokesData(term);
+    useEffect(() => {
+        if (debouncedSearchTerm.length > 2) {
+            searchJokesData(debouncedSearchTerm);
         } else {
-            // Clear search results if term is less than 3 characters
             setSearchResults([]);
         }
-    };
+    }, [debouncedSearchTerm, searchJokesData, setSearchResults]);
 
     const handleSearchResultClick = (joke) => {
         fetchJokeByIdData(joke.id);
@@ -112,16 +122,29 @@ const Header = ({toggleTheme}) => {
                 <Toolbar sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                     <Box sx={{display: 'flex', alignItems: 'center'}}>
                         <Link to="/" style={{display: 'flex', alignItems: 'center', textDecoration: 'none'}}>
-                            <Logo
-                                alt="Logo"
-                                style={{
-                                    height: '40px',
-                                    width: 'auto',
-                                    marginRight: '8px',
-                                    fill: theme.palette.primary.main,
-                                    stroke: theme.palette.primary.main
-                                }}
-                            />
+                            {isMobile ? (
+                                <LogoMobile
+                                    alt="Mobile Logo"
+                                    style={{
+                                        height: '40px',
+                                        width: 'auto',
+                                        marginRight: '8px',
+                                        fill: theme.palette.primary.main,
+                                        stroke: theme.palette.primary.main
+                                    }}
+                                />
+                            ) : (
+                                <LogoDesktop
+                                    alt="Desktop Logo"
+                                    style={{
+                                        height: '40px',
+                                        width: 'auto',
+                                        marginRight: '8px',
+                                        fill: theme.palette.primary.main,
+                                        stroke: theme.palette.primary.main
+                                    }}
+                                />
+                            )}
                         </Link>
                         <Box sx={{display: {xs: 'none', md: 'flex'}, alignItems: 'center'}}>
                             <Button component={Link} to="/" sx={{color: 'text.primary', mr: 2}} startIcon={<Home/>}>
@@ -131,57 +154,61 @@ const Header = ({toggleTheme}) => {
                                     startIcon={<History/>}>
                                 History
                             </Button>
-                        </Box>
-                    </Box>
+                            <Box sx={{display: 'flex', alignItems: 'center', position: 'relative'}}>
+                                <IconButton
+                                    onClick={() => setSearchOpen(!searchOpen)}
+                                    sx={{color: theme.palette.text.secondary}}
+                                >
+                                    <SearchIcon/>
+                                </IconButton>
 
-                    <Box sx={{display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1}}>
-                        {user && (
-                            <Box
-                                ref={searchRef}
-                                sx={{display: {xs: 'none', md: 'flex'}, alignItems: 'center', position: 'relative'}}
-                            >
-                                <SearchIcon sx={{color: theme.palette.text.secondary, mr: 1}}/>
-                                <InputBase
-                                    sx={{
-                                        color: 'inherit',
-                                        backgroundColor: theme.palette.mode === 'dark'
-                                            ? alpha(theme.palette.common.white, 0.15)
-                                            : alpha(theme.palette.common.black, 0.05),
-                                        '&:hover': {
+                                <Collapse in={searchOpen} orientation="horizontal"
+                                          sx={{display: {xs: 'none', md: 'flex'}, alignItems: 'center'}}>
+                                    <InputBase
+                                        sx={{
+                                            color: 'inherit',
                                             backgroundColor: theme.palette.mode === 'dark'
-                                                ? alpha(theme.palette.common.white, 0.25)
-                                                : alpha(theme.palette.common.black, 0.1),
-                                        },
-                                        borderRadius: 1,
-                                        padding: '0 8px',
-                                        width: '300px',
-                                        transition: theme.transitions.create(['width', 'background-color']),
-                                    }}
-                                    placeholder="Search…"
-                                    value={searchTerm}
-                                    onChange={handleSearchChange}
-                                    endAdornment={
-                                        isLoading ? (
-                                            <InputAdornment position="end">
-                                                <CircularProgress size={24} sx={{color: theme.palette.text.secondary}}/>
-                                            </InputAdornment>
-                                        ) : (
-                                            searchResults.length > 0 && (
+                                                ? alpha(theme.palette.common.white, 0.15)
+                                                : alpha(theme.palette.common.black, 0.05),
+                                            '&:hover': {
+                                                backgroundColor: theme.palette.mode === 'dark'
+                                                    ? alpha(theme.palette.common.white, 0.25)
+                                                    : alpha(theme.palette.common.black, 0.1),
+                                            },
+                                            borderRadius: 1,
+                                            padding: '0 8px',
+                                            width: '300px',
+                                            transition: theme.transitions.create(['width', 'background-color']),
+                                        }}
+                                        placeholder="Search…"
+                                        value={searchTerm}
+                                        onChange={handleSearchChange}
+                                        endAdornment={
+                                            isLoading ? (
                                                 <InputAdornment position="end">
-                                                    <IconButton
-                                                        onClick={() => {
-                                                            setSearchTerm('');
-                                                            setSearchResults([]);
-                                                        }}
-                                                        sx={{color: theme.palette.text.secondary}}
-                                                    >
-                                                        <CloseIcon/>
-                                                    </IconButton>
+                                                    <CircularProgress size={24}
+                                                                      sx={{color: theme.palette.text.secondary}}/>
                                                 </InputAdornment>
+                                            ) : (
+                                                searchResults.length > 0 && (
+                                                    <InputAdornment position="end">
+                                                        <IconButton
+                                                            onClick={() => {
+                                                                setSearchOpen(false)
+                                                                setSearchTerm('');
+                                                                setSearchResults([]);
+                                                            }}
+                                                            sx={{color: theme.palette.text.secondary}}
+                                                        >
+                                                            <CloseIcon/>
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                )
                                             )
-                                        )
-                                    }
-                                />
+                                        }
+                                    />
+                                </Collapse>
+
                                 {isLoading && (
                                     <CircularProgress
                                         size={24}
@@ -192,6 +219,7 @@ const Header = ({toggleTheme}) => {
                                         }}
                                     />
                                 )}
+
                                 {searchResults.length > 0 && (
                                     <Box
                                         sx={{
@@ -211,7 +239,6 @@ const Header = ({toggleTheme}) => {
                                             cursor: 'pointer',
                                         }}
                                     >
-
                                         {searchResults.map((joke) => (
                                             <Box
                                                 key={joke.id}
@@ -225,6 +252,7 @@ const Header = ({toggleTheme}) => {
                                                 }}
                                                 onClick={() => {
                                                     handleSearchResultClick(joke);
+                                                    setSearchOpen(false)
                                                     setSearchTerm(''); // Clear the search term
                                                 }}
                                             >
@@ -234,14 +262,23 @@ const Header = ({toggleTheme}) => {
                                     </Box>
                                 )}
                             </Box>
-                        )}
+                        </Box>
+                        <Box sx={{display: {xs: 'flex', md: 'none'}, alignItems: 'center', marginLeft: '10px'}}>
+                            {user && (
+                                <>
+                                    <SearchIcon onClick={handleSearchDialogOpen}
+                                                sx={{color: theme.palette.text.secondary}}/>
+                                </>
+                            )}
+                        </Box>
                     </Box>
+
                     <Box sx={{display: {xs: 'flex', md: 'none'}, alignItems: 'center', marginRight: '10px'}}>
                         {user && (
                             <>
-                                <SearchIcon onClick={handleSearchDialogOpen} sx={{marginRight: '10px'}}/>
                                 <Typography variant="body1" color="text.primary" sx={{marginRight: '10px'}}>
-                                    Hi, <Box component='span' color='primary.main'><strong>{user.name}</strong></Box>
+                                    Hi, <Box component='span'
+                                             color='primary.main'><strong>{user.name}</strong></Box>
                                 </Typography>
                             </>
                         )}
@@ -329,7 +366,14 @@ const Header = ({toggleTheme}) => {
                 }}
                 fullWidth
                 maxWidth="sm"
-                sx={{display: {md: 'none'}}}
+                scroll="paper"
+                sx={{
+                    display: {md: 'none'},
+                    "& .MuiDialog-container": {
+                        alignItems: "flex-start",
+                    },
+                }}
+                PaperProps={{sx: {mt: "52px"}}}
             >
                 <DialogContent
                     sx={{
@@ -337,7 +381,7 @@ const Header = ({toggleTheme}) => {
                         color: theme.palette.text.primary,
                         display: 'flex',
                         flexDirection: 'column',
-                        padding: 2,
+                        padding: 1,
                     }}
                 >
                     <IconButton
@@ -352,6 +396,7 @@ const Header = ({toggleTheme}) => {
                             right: 0,
                             color: theme.palette.text.secondary,
                             float: 'right',
+                            padding: 0,
                         }}
                     >
                         <CloseIcon/>
@@ -360,7 +405,6 @@ const Header = ({toggleTheme}) => {
                         sx={{
                             display: 'flex',
                             alignItems: 'center',
-                            mb: 2,
                             mt: '20px'
                         }}
                     >
@@ -377,7 +421,7 @@ const Header = ({toggleTheme}) => {
                                 },
                                 borderRadius: 1,
                                 padding: '0 8px',
-                                width: '300px',
+                                width: '100%',
                                 transition: theme.transitions.create(['width', 'background-color']),
                             }}
                             placeholder="Search…"

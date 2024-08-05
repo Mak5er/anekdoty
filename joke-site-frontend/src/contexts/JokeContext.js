@@ -65,7 +65,7 @@ export const JokeProvider = ({children}) => {
         }
     }, []);
 
-    const handleVoteData = async (jokeId, voteType) => {
+    const handleVoteData = useCallback (async (jokeId, voteType) => {
         try {
             const response = await handleVote(jokeId, voteType);
             const votesData = await fetchVotes(jokeId);
@@ -74,9 +74,9 @@ export const JokeProvider = ({children}) => {
         } catch (error) {
             console.error('Error voting on joke:', error);
         }
-    };
+    }, []);
 
-    const fetchUserVoteData = async (jokeId) => {
+    const fetchUserVoteData = useCallback(async (jokeId) => {
         try {
             const response = await fetchUserVote(jokeId);
             if (!response.error) {
@@ -85,9 +85,9 @@ export const JokeProvider = ({children}) => {
         } catch (error) {
             console.error('Error fetching user vote:', error);
         }
-    };
+    }, []);
 
-    const searchJokesData = async (query) => {
+    const searchJokesData = useCallback(async (query) => {
         setIsLoading(true);
         try {
             const results = await searchJokes(query);
@@ -97,7 +97,7 @@ export const JokeProvider = ({children}) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
 
     return (
