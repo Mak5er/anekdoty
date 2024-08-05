@@ -6,6 +6,7 @@ services:
       context: ./joke-site-backend
     env_file:
       - .env
+    restart: always
     ports:
       - "8000:8000"
 
@@ -14,6 +15,7 @@ services:
       context: ./joke-site-frontend
     env_file:
       - .env
+    restart: always
     ports:
       - "3000:3000"
 
