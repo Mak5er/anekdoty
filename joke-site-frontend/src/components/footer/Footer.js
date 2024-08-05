@@ -8,7 +8,6 @@ const Footer = () => {
             component="footer"
             marginTop='1rem'
             width='100%'
-            minHeight="2vh"
             sx={{backgroundColor: 'footer.default', position: 'relative'}}
         >
             <Grid container alignItems="center" justifyContent="center"

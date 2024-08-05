@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, {useCallback, useEffect, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -9,10 +9,11 @@ import IconButton from '@mui/material/IconButton';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import ShareIcon from '@mui/icons-material/Share';
-import { Skeleton, useTheme, useMediaQuery } from '@mui/material';
+import {Skeleton, useMediaQuery, useTheme} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import CategoryModal from './CategoryModal';
-import { useJoke } from "../../contexts/JokeContext";
-import { useUser } from "../../contexts/UserContext";
+import {useJoke} from "../../contexts/JokeContext";
+import {useUser} from "../../contexts/UserContext";
 
 const GetJoke = () => {
     const theme = useTheme();
@@ -20,8 +21,9 @@ const GetJoke = () => {
     const [open, setOpen] = useState(false);
     const [disabled, setDisabled] = useState(false);
     const [showCopiedMessage, setShowCopiedMessage] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState(localStorage.getItem('selectedCategory') || '');
     const navigate = useNavigate();
-    const { user, requireLogin } = useUser();
+    const {user, requireLogin} = useUser();
 
     const {
         handleVoteData, votes, userVote, fetchUserVoteData,
@@ -31,18 +33,18 @@ const GetJoke = () => {
     const newJoke = useCallback(() => {
         if (disabled) return;
         setDisabled(true);
-        fetchJokeData();
+        fetchJokeData({tag: selectedCategory});
         setTimeout(() => {
             setDisabled(false);
         }, 1000);
-    }, [disabled, fetchJokeData]);
+    }, [disabled, fetchJokeData, selectedCategory]);
 
     useEffect(() => {
         if (joke && joke.id) {
             const url = new URL(window.location.origin);
             url.pathname = '/joke';
             url.searchParams.set('id', joke.id);
-            navigate(url.pathname + url.search, { replace: true });
+            navigate(url.pathname + url.search, {replace: true});
             if (user) {
                 fetchUserVoteData(joke.id);
             }
@@ -54,7 +56,9 @@ const GetJoke = () => {
 
     const handleCategorySelect = useCallback(async (tag) => {
         handleClose();
-        fetchJokeData({ tag: tag });
+        setSelectedCategory(tag);
+        localStorage.setItem('selectedCategory', tag);
+        fetchJokeData({tag});
     }, [fetchJokeData, handleClose]);
 
     const handleVote = useCallback(async (voteType) => {
@@ -77,13 +81,19 @@ const GetJoke = () => {
         });
     }, [joke]);
 
+    const handleResetCategory = useCallback(() => {
+        setSelectedCategory('');
+        localStorage.removeItem('selectedCategory');
+        fetchJokeData();
+    }, [fetchJokeData]);
+
     const renderJokeContent = () => {
         if (isJokeLoading) {
             return (
                 <>
-                    <Skeleton variant="text" width="95%" height={30} />
-                    <Skeleton variant="text" width="100%" height={30} />
-                    <Skeleton variant="text" width="95%" height={30} />
+                    <Skeleton variant="text" width="95%" height={30}/>
+                    <Skeleton variant="text" width="100%" height={30}/>
+                    <Skeleton variant="text" width="95%" height={30}/>
                 </>
             );
         }
@@ -91,11 +101,11 @@ const GetJoke = () => {
         if (joke) {
             return (
                 <>
-                    <Typography variant="body1" sx={{ color: theme.palette.text.primary, fontSize: '20px' }}>
+                    <Typography variant="body1" sx={{color: theme.palette.text.primary, fontSize: '20px'}}>
                         {joke.text}
                     </Typography>
                     {joke.tags?.length > 0 && (
-                        <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontSize: '16px' }}>
+                        <Typography variant="body2" sx={{color: theme.palette.text.secondary, fontSize: '16px'}}>
                             {joke.tags}
                         </Typography>
                     )}
@@ -103,18 +113,19 @@ const GetJoke = () => {
             );
         }
 
-        return <Typography variant="body1" sx={{ color: theme.palette.text.primary, fontSize: '20px' }}>Не знайдено анекдоту</Typography>;
+        return <Typography variant="body1" sx={{color: theme.palette.text.primary, fontSize: '20px'}}>Не знайдено
+            анекдоту</Typography>;
     };
 
     const renderVotes = () => {
         if (isJokeLoading) {
             return (
                 <Grid container spacing={2} justifyContent="center" alignItems="center" mt={2}>
-                    <VoteButton type="like" count={<Skeleton variant="text" width={20} />} />
-                    <VoteButton type="dislike" count={<Skeleton variant="text" width={20} />} />
-                    <Grid item sx={{ position: 'relative' }}>
+                    <VoteButton type="like" count={<Skeleton variant="text" width={10}/>}/>
+                    <VoteButton type="dislike" count={<Skeleton variant="text" width={10}/>}/>
+                    <Grid item sx={{position: 'relative'}}>
                         <IconButton color="default">
-                            <ShareIcon />
+                            <ShareIcon/>
                         </IconButton>
                     </Grid>
                 </Grid>
@@ -125,12 +136,12 @@ const GetJoke = () => {
             return (
                 <Grid container spacing={2} justifyContent="center" alignItems="center" mt={2}>
                     <VoteButton type="like" count={votes.likes} active={userVote === 'like'}
-                        onClick={() => handleVote('like')} />
+                                onClick={() => handleVote('like')}/>
                     <VoteButton type="dislike" count={votes.dislikes} active={userVote === 'dislike'}
-                        onClick={() => handleVote('dislike')} />
-                    <Grid item sx={{ position: 'relative' }}>
+                                onClick={() => handleVote('dislike')}/>
+                    <Grid item sx={{position: 'relative'}}>
                         <IconButton color="primary" onClick={handleShare}>
-                            <ShareIcon />
+                            <ShareIcon/>
                         </IconButton>
                         {showCopiedMessage && (
                             <Box sx={{
@@ -152,7 +163,8 @@ const GetJoke = () => {
             );
         }
 
-        return <Typography variant="body1" sx={{ color: theme.palette.text.primary, fontSize: '20px' }}>Не знайдено реакцій</Typography>;
+        return <Typography variant="body1" sx={{color: theme.palette.text.primary, fontSize: '20px'}}>Не знайдено
+            реакцій</Typography>;
     };
 
     return (
@@ -167,7 +179,7 @@ const GetJoke = () => {
             <Typography variant='h3' color='secondary.main'>
                 <strong>Анекдоти <Box component='span' color='primary.main'>Українською</Box></strong>
             </Typography>
-            <Grid container justifyContent="center" sx={{ pt: isSmallScreen ? '1rem' : '2rem' }}>
+            <Grid container justifyContent="center" sx={{pt: isSmallScreen ? '1rem' : '2rem'}}>
                 <Grid item xs={12} md={10}>
                     <Box sx={{
                         p: 3,
@@ -187,29 +199,41 @@ const GetJoke = () => {
             {renderVotes()}
 
             <Grid mt={1} container spacing={2} justifyContent="center">
+
                 <Grid item>
                     <Button color="secondary" size="large" variant="contained" onClick={newJoke}>
                         Новий анекдот
                     </Button>
                 </Grid>
                 <Grid item>
-                    <Button color="secondary" size="large" variant="outlined" onClick={handleOpen}>
-                        Обрати Категорію
-                    </Button>
+                    {selectedCategory ? (
+                        <Box sx={{display: 'flex', alignItems: 'center'}}>
+                            <Button color="secondary" size="large" variant="outlined">
+                                #{selectedCategory}
+                            </Button>
+                            <IconButton onClick={handleResetCategory} color="error">
+                                <CloseIcon/>
+                            </IconButton>
+                        </Box>
+                    ) : (
+                        <Button color="secondary" size="large" variant="outlined" onClick={handleOpen}>
+                            Обрати Категорію
+                        </Button>
+                    )}
                 </Grid>
             </Grid>
 
-            <CategoryModal open={open} handleClose={handleClose} handleCategorySelect={handleCategorySelect} />
+            <CategoryModal open={open} handleClose={handleClose} handleCategorySelect={handleCategorySelect}/>
         </Container>
     );
 };
 
-const VoteButton = ({ type, count, active, onClick }) => (
+const VoteButton = ({type, count, active, onClick}) => (
     <Grid item>
         <IconButton color={active ? 'primary' : 'default'} onClick={onClick}>
-            {type === 'like' ? <ThumbUpIcon /> : <ThumbDownIcon />}
+            {type === 'like' ? <ThumbUpIcon/> : <ThumbDownIcon/>}
         </IconButton>
-        <Box sx={{ display: 'inline-block', marginLeft: '4px', verticalAlign: 'middle' }}>
+        <Box sx={{display: 'inline-block', marginLeft: '4px', verticalAlign: 'middle'}}>
             <Typography color='text.primary' variant="body2" display="block">
                 {count}
             </Typography>
