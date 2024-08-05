@@ -20,7 +20,7 @@ const Home = () => {
             fetchJokeData({joke_id: jokeId}).then(() => {
                 setJokeLoaded(true);
             });
-        } else if (user && !jokeLoaded) {
+        } else if (!jokeLoaded) {
             fetchJokeData();
             setJokeLoaded(true);
         }
