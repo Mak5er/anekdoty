@@ -286,8 +286,8 @@ const Header = ({toggleTheme}) => {
                         }}
                         sx={{
                             position: 'absolute',
-                            top: 0,
-                            right: 0,
+                            top: 2,
+                            right: 2,
                             color: theme.palette.text.secondary,
                             float: 'right',
                             padding: 0,
@@ -316,6 +316,7 @@ const Header = ({toggleTheme}) => {
                                 borderRadius: 1,
                                 padding: '0 8px',
                                 width: '100%',
+                                height: '40px',
                                 transition: theme.transitions.create(['width', 'background-color']),
                             }}
                             placeholder="Search…"
