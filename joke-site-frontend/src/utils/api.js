@@ -75,7 +75,7 @@ export const fetchJoke = async () => {
 
 export const fetchJokeById = async (joke_id) => {
     try {
-        const res = await axios.get(`${API_BASE_URL}/api/joke/id?joke_id=${joke_id}`, {withCredentials: true});
+        const res = await axios.get(`${API_BASE_URL}/api/joke?id=${joke_id}`, {withCredentials: true});
         return res.data;
     } catch (error) {
         console.error("Failed to fetch joke:", error);
@@ -85,7 +85,7 @@ export const fetchJokeById = async (joke_id) => {
 
 export const fetchJokeByCategory = async (tag) => {
     try {
-        const res = await axios.get(`${API_BASE_URL}/api/joke/category?tag=${tag}`, {withCredentials: true});
+        const res = await axios.get(`${API_BASE_URL}/api/joke?tag=${tag}`, {withCredentials: true});
         return res.data;
     } catch (error) {
         console.error('Error fetching joke:', error);

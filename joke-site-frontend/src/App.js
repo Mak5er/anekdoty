@@ -1,12 +1,14 @@
 import React, {lazy, Suspense, useState} from 'react';
 import {BrowserRouter as Router, Route, Routes} from 'react-router-dom';
 import {CssBaseline, ThemeProvider} from '@mui/material';
-import Header from './components/Header';
+import Header from './components/header/Header';
+import Footer from './components/footer/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
 import CookieConsent from './components/CookieConsent';
+import LoginDialog from './components/LoginDialog';
 import {darkTheme, lightTheme} from './theme';
 import './App.css';
-import {UserProvider} from './contexts/UserContext';
+import {UserProvider, useUser} from './contexts/UserContext';
 import {JokeProvider} from './contexts/JokeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -27,7 +29,6 @@ const App = () => {
     };
 
     const [theme, setTheme] = useState(getInitialTheme);
-    const [joke, setJoke] = useState(null);
 
     // Toggle theme and save preference to localStorage
     const toggleTheme = () => {
@@ -47,25 +48,32 @@ const App = () => {
                 <UserProvider>
                     <JokeProvider>
                         <div className="app-container">
-                            <Header setJoke={setJoke} toggleTheme={toggleTheme}/>
+                            <Header toggleTheme={toggleTheme}/>
                             <div className="content">
                                 <Suspense fallback={<LoadingSpinner/>}>
                                     <Routes>
-                                        <Route path="/" element={<ProtectedRoute element={<Home joke={joke} setJoke={setJoke}/>}/>}/>
+                                        <Route path="/" element={<Home />}/>
                                         <Route path="/history" element={<ProtectedRoute element={<JokeHistory/>}/>}/>
-                                        <Route path="/joke" element={<ProtectedRoute element={<Home joke={joke} setJoke={setJoke}/>}/>}/>
+                                        <Route path="/joke" element={<Home/>}/>
                                         <Route path="/login" element={<LoginPage/>}/>
                                         <Route path="/privacy-policy" element={<PrivacyPolicy/>}/>
                                     </Routes>
                                 </Suspense>
                             </div>
+                            <Footer />
                         </div>
                         <CookieConsent onAccept={handleAcceptCookies} />
+                        <LoginDialogWrapper />
                     </JokeProvider>
                 </UserProvider>
             </Router>
         </ThemeProvider>
     );
+};
+
+const LoginDialogWrapper = () => {
+    const { showLoginDialog, closeLoginDialog } = useUser();
+    return <LoginDialog open={showLoginDialog} onClose={closeLoginDialog} />;
 };
 
 export default App;

@@ -80,38 +80,61 @@ async def logout(request: Request):
 
 
 @app.get("/api/joke")
-async def get_joke(request: Request, db: AsyncSession = Depends(get_db)):
+async def get_joke(
+        request: Request,
+        id: int = None,
+        tag: str = None,
+        db: AsyncSession = Depends(get_db)
+):
     user = request.session.get('user')
+    user_email = user.get("email") if user else None
 
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+    if user and user_email:
+        query = select(SiteUser).filter(SiteUser.email == user_email)
+        result = await db.execute(query)
+        user = result.scalars().first()
 
-    user_email = user.get("email")
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    if not user_email:
-        raise HTTPException(status_code=400, detail="Email not found in session")
+        user_id = user.id
 
-    query = select(SiteUser).filter(SiteUser.email == user_email)
-    result = await db.execute(query)
-    user = result.scalars().first()
+        # Subquery to filter out already sent jokes
+        subquery = select(SentJoke.joke_id).filter(SentJoke.user_id == user_id).subquery()
+    else:
+        user_id = None
+        subquery = None
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user_id = user.id
-
-    # Subquery to filter out already sent jokes
-    subquery = select(SentJoke.joke_id).filter(SentJoke.user_id == user_id).subquery()
-
-    # Main query to get a joke that hasn't been sent to the user
-    query = (
-        select(Joke)
-        .outerjoin(Vote, Joke.id == Vote.joke_id)
-        .filter(Joke.id.notin_(subquery))
-        .group_by(Joke.id)
-        .order_by(func.count(Vote.id).desc())
-        .limit(1)
-    )
+    if id:
+        # Fetch joke by ID
+        query = select(Joke).filter(Joke.id == id)
+    elif tag:
+        # Fetch joke by category
+        query = (
+            select(Joke)
+            .outerjoin(Vote, Joke.id == Vote.joke_id)
+            .filter(Joke.tags.ilike(f'%{tag}%'))
+        )
+        if subquery is not None:
+            query = query.filter(Joke.id.notin_(subquery))
+        query = query.group_by(Joke.id)
+        if user_id is not None:
+            query = query.order_by(func.count(Vote.id).desc()).limit(1)
+        else:
+            query = query.order_by(func.random()).limit(1)
+    else:
+        # Fetch a random joke
+        query = (
+            select(Joke)
+            .outerjoin(Vote, Joke.id == Vote.joke_id)
+        )
+        if subquery is not None:
+            query = query.filter(Joke.id.notin_(subquery))
+        query = query.group_by(Joke.id)
+        if user_id is not None:
+            query = query.order_by(func.count(Vote.id).desc()).limit(1)
+        else:
+            query = query.order_by(func.random()).limit(1)
 
     result = await db.execute(query)
     joke = result.scalars().first()
@@ -120,159 +143,27 @@ async def get_joke(request: Request, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No jokes available")
 
     tags_with_hash = joke.tags
-
     if joke.tags is not None:
-        tags_with_hash = f'#{joke.tags}'
-        tags_with_hash = tags_with_hash.replace(', ', ' #')
+        tags_with_hash = f'#{joke.tags}'.replace(', ', ' #')
 
-    result = {"id": joke.id, "text": joke.text, "tags": tags_with_hash}
+    joke_result = {"id": joke.id, "text": joke.text, "tags": tags_with_hash}
 
-    # Check if the record already exists
-    sent_joke_query = select(SentJoke).filter(SentJoke.user_id == user_id, SentJoke.joke_id == joke.id)
-    sent_joke_result = await db.execute(sent_joke_query)
-    sent_joke = sent_joke_result.scalars().first()
+    if user_id is not None:
+        # Check if the record already exists
+        sent_joke_query = select(SentJoke).filter(SentJoke.user_id == user_id, SentJoke.joke_id == joke.id)
+        sent_joke_result = await db.execute(sent_joke_query)
+        sent_joke = sent_joke_result.scalars().first()
 
-    if sent_joke is None:
-        sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
-        db.add(sent_joke)
-        await db.commit()
+        if sent_joke is None:
+            sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
+            db.add(sent_joke)
+            await db.commit()
 
-    return result
-
-
-@app.get("/api/joke/id")
-async def get_joke(request: Request, joke_id: int, db: AsyncSession = Depends(get_db)):
-    user = request.session.get('user')
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user_email = user.get("email")
-
-    if not user_email:
-        raise HTTPException(status_code=400, detail="Email not found in session")
-
-    query = select(SiteUser).filter(SiteUser.email == user_email)
-    result = await db.execute(query)
-    user = result.scalars().first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user_id = user.id
-
-    # Main query to get a joke that hasn't been sent to the user
-    query = select(Joke).filter(Joke.id == joke_id)
-
-    result = await db.execute(query)
-    joke = result.scalars().first()
-
-    if not joke:
-        raise HTTPException(status_code=404, detail="No jokes available")
-
-    tags_with_hash = joke.tags
-
-    if joke.tags is not None:
-        tags_with_hash = f'#{joke.tags}'
-        tags_with_hash = tags_with_hash.replace(', ', ' #')
-
-    result = {"id": joke.id, "text": joke.text, "tags": tags_with_hash}
-
-    # Check if the record already exists
-    sent_joke_query = select(SentJoke).filter(SentJoke.user_id == user_id, SentJoke.joke_id == joke.id)
-    sent_joke_result = await db.execute(sent_joke_query)
-    sent_joke = sent_joke_result.scalars().first()
-
-    if sent_joke is None:
-        sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
-        db.add(sent_joke)
-        await db.commit()
-
-    return result
-
-
-@app.get("/api/joke/category")
-async def get_category_joke(request: Request, tag: str, db: AsyncSession = Depends(get_db)):
-    user = request.session.get('user')
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user_email = user.get("email")
-
-    if not user_email:
-        raise HTTPException(status_code=400, detail="Email not found in session")
-
-    query = select(SiteUser).filter(SiteUser.email == user_email)
-    result = await db.execute(query)
-    user = result.scalars().first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    user_id = user.id
-
-    # Subquery to filter out already sent jokes
-    subquery = select(SentJoke.joke_id).filter(SentJoke.user_id == user_id).subquery()
-
-    # Main query to get a joke that hasn't been sent to the user in the specified category
-    query = (
-        select(Joke)
-        .outerjoin(Vote, Joke.id == Vote.joke_id)
-        .filter(Joke.id.notin_(subquery), Joke.tags.ilike(f'%{tag}%'))
-        .group_by(Joke.id)
-        .order_by(func.count(Vote.id).desc())
-        .limit(1)
-    )
-
-    result = await db.execute(query)
-    joke = result.scalars().first()
-
-    if not joke:
-        raise HTTPException(status_code=404, detail="No jokes available")
-
-    tags_with_hash = joke.tags
-
-    if joke.tags is not None:
-        tags_with_hash = f'#{joke.tags}'
-        tags_with_hash.replace(', ', ' #')
-
-    result = {"id": joke.id, "text": joke.text, "tags": tags_with_hash}
-
-    # Check if the record already exists
-    sent_joke_query = select(SentJoke).filter(SentJoke.user_id == user_id, SentJoke.joke_id == joke.id)
-    sent_joke_result = await db.execute(sent_joke_query)
-    sent_joke = sent_joke_result.scalars().first()
-
-    if sent_joke is None:
-        sent_joke = SentJoke(user_id=user_id, joke_id=joke.id)
-        db.add(sent_joke)
-        await db.commit()
-
-    return result
+    return joke_result
 
 
 @app.get("/api/joke/votes")
 async def return_joke_votes(request: Request, joke_id: int, db: AsyncSession = Depends(get_db)):
-    user = request.session.get('user')
-
-    print(joke_id)
-
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    user_email = user.get("email")
-
-    if not user_email:
-        raise HTTPException(status_code=400, detail="Email not found in session")
-
-    query = select(SiteUser).filter(SiteUser.email == user_email)
-    result = await db.execute(query)
-    user = result.scalars().first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
     likes_query = select(func.count(Vote.id)).where(Vote.joke_id == joke_id, Vote.vote_type == "like")
     likes_result = await db.execute(likes_query)
     likes_count = likes_result.scalar()

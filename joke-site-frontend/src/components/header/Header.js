@@ -2,45 +2,31 @@ import React, {useEffect, useState} from 'react';
 import {
     alpha,
     AppBar,
-    Avatar,
     Box,
     Button,
     CircularProgress,
     Collapse,
     Dialog,
     DialogContent,
-    Divider,
     IconButton,
     InputAdornment,
     InputBase,
-    Menu,
-    MenuItem,
     Toolbar,
-    Typography,
     useMediaQuery,
     useTheme
 } from '@mui/material';
-import {
-    Close as CloseIcon,
-    DarkMode,
-    History,
-    Home,
-    LightMode,
-    Logout,
-    Menu as MenuIcon,
-    Search as SearchIcon
-} from '@mui/icons-material';
+import {Close as CloseIcon, History, Home, Search as SearchIcon} from '@mui/icons-material';
 import {Link} from 'react-router-dom';
+import UserMobile from "../header/UserMobile";
 
-import {ReactComponent as LogoDesktop} from '../images/logo.svg';
-import {ReactComponent as LogoMobile} from '../images/logo-mobile.svg';
+import {ReactComponent as LogoDesktop} from '../../images/logo.svg';
+import {ReactComponent as LogoMobile} from '../../images/logo-mobile.svg';
 
-import {useUser} from "../contexts/UserContext";
-import {useJoke} from "../contexts/JokeContext";
-import {useDebounce} from '../hooks/useDebounce';
+import {useJoke} from "../../contexts/JokeContext";
+import {useDebounce} from '../../hooks/useDebounce';
+import UserDesktop from "./UserDesktop";
 
 const Header = ({toggleTheme}) => {
-    const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [isScrolled, setIsScrolled] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [searchOpen, setSearchOpen] = useState(false);
@@ -48,21 +34,12 @@ const Header = ({toggleTheme}) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-    const {user, logout} = useUser();
-    const {fetchJokeByIdData, searchJokesData, isLoading} = useJoke();
+    const {fetchJokeData, searchJokesData, isLoading} = useJoke();
     const {searchResults, setSearchResults} = useJoke();
 
 
     const debouncedSearchTerm = useDebounce(searchTerm, 200);
 
-
-    const handleMenuClick = (event) => {
-        setMenuAnchorEl(event.currentTarget);
-    };
-
-    const handleMenuClose = () => {
-        setMenuAnchorEl(null);
-    };
 
     const handleScroll = () => {
         setIsScrolled(window.scrollY > 50);
@@ -81,7 +58,7 @@ const Header = ({toggleTheme}) => {
     }, [debouncedSearchTerm, searchJokesData, setSearchResults]);
 
     const handleSearchResultClick = (joke) => {
-        fetchJokeByIdData(joke.id);
+        fetchJokeData({joke_id: joke.id});
         setSearchTerm('');
         setSearchResults([]);
         setIsSearchDialogOpen(false);
@@ -264,96 +241,13 @@ const Header = ({toggleTheme}) => {
                             </Box>
                         </Box>
                         <Box sx={{display: {xs: 'flex', md: 'none'}, alignItems: 'center', marginLeft: '10px'}}>
-                            {user && (
-                                <>
-                                    <SearchIcon onClick={handleSearchDialogOpen}
-                                                sx={{color: theme.palette.text.secondary}}/>
-                                </>
-                            )}
+                            <SearchIcon onClick={handleSearchDialogOpen}
+                                        sx={{color: theme.palette.text.secondary}}/>
                         </Box>
                     </Box>
 
-                    <Box sx={{display: {xs: 'flex', md: 'none'}, alignItems: 'center', marginRight: '10px'}}>
-                        {user && (
-                            <>
-                                <Typography variant="body1" color="text.primary" sx={{marginRight: '10px'}}>
-                                    Hi, <Box component='span'
-                                             color='primary.main'><strong>{user.name}</strong></Box>
-                                </Typography>
-                            </>
-                        )}
-                        <IconButton onClick={toggleTheme} color="inherit">
-                            {theme.palette.mode === 'dark' ? <LightMode/> : <DarkMode/>}
-                        </IconButton>
-                        <IconButton
-                            edge="end"
-                            color="inherit"
-                            aria-label="menu"
-                            onClick={handleMenuClick}
-                            sx={{display: {xs: 'block', md: 'none'}}}
-                        >
-                            <MenuIcon/>
-                        </IconButton>
-                        <Menu
-                            anchorEl={menuAnchorEl}
-                            open={Boolean(menuAnchorEl)}
-                            onClose={handleMenuClose}
-                        >
-                            {user && (
-                                <>
-                                    <MenuItem>
-                                        <Avatar
-                                            alt={user?.name}
-                                            src={user?.picture}
-                                            sx={{marginRight: '10px'}}
-                                        />
-                                        <Typography variant="body1" color="text.primary">
-                                            {user.name}
-                                        </Typography>
-                                    </MenuItem>
-                                    <Divider/>
-                                </>
-                            )}
-                            <MenuItem component={Link} to="/" onClick={handleMenuClose}>
-                                <Home sx={{marginRight: '10px'}}/> Home
-                            </MenuItem>
-                            <MenuItem component={Link} to="/history" onClick={handleMenuClose}>
-                                <History sx={{marginRight: '10px'}}/> History
-                            </MenuItem>
-                            {user && (
-                                <MenuItem onClick={handleSearchDialogOpen}>
-                                    <SearchIcon sx={{marginRight: '10px'}}/> Search
-                                </MenuItem>
-                            )}
-
-
-                            {user && (
-                                <MenuItem onClick={logout}>
-                                    <Logout sx={{marginRight: '10px'}}/> Logout
-                                </MenuItem>
-                            )}
-                        </Menu>
-                    </Box>
-                    <Box sx={{display: {xs: 'none', md: 'flex'}, alignItems: 'center'}}>
-                        {user && (
-                            <Box sx={{display: 'flex', alignItems: 'center'}}>
-                                <Typography variant="body1" color="text.primary" sx={{marginRight: '10px'}}>
-                                    Hi, <Box component='span' color='primary.main'><strong>{user.name}</strong></Box>
-                                </Typography>
-                                <Avatar
-                                    alt={user?.name}
-                                    src={user?.picture}
-                                    sx={{display: {xs: 'none', md: 'block'}}}
-                                />
-                                <IconButton onClick={logout} color="inherit">
-                                    <Logout/>
-                                </IconButton>
-                            </Box>
-                        )}
-                        <IconButton onClick={toggleTheme} color="inherit">
-                            {theme.palette.mode === 'dark' ? <LightMode/> : <DarkMode/>}
-                        </IconButton>
-                    </Box>
+                    <UserDesktop toggleTheme={toggleTheme}/>
+                    <UserMobile toggleTheme={toggleTheme} handleSearchDialogOpen={handleSearchDialogOpen}/>
 
                 </Toolbar>
             </AppBar>

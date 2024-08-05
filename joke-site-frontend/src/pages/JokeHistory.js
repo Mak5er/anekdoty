@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {Box, CircularProgress, Container, Typography} from '@mui/material';
+import {Box, CircularProgress, Container, Typography, useMediaQuery} from '@mui/material';
 import {useTheme} from '@mui/material/styles';
 import {useUser} from '../contexts/UserContext';
 import {useJoke} from '../contexts/JokeContext';
@@ -14,8 +14,10 @@ const JokeHistory = () => {
     const observer = useRef();
     const theme = useTheme();
     const {user} = useUser();
-    const {fetchJokeByIdData} = useJoke();
-    const navigate = useNavigate(); // Hook for navigation
+    const {fetchJokeData} = useJoke();
+    const navigate = useNavigate();
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
 
     const loadMoreJokes = useCallback(async () => {
         if (loading || !hasMore || !user) return;
@@ -54,9 +56,9 @@ const JokeHistory = () => {
         if (node) observer.current.observe(node);
     }, [loading, hasMore, loadMoreJokes]);
 
-    const handleJokeClick = async (id) => {
-        await fetchJokeByIdData(id);
-        navigate(`/joke?id=${id}`);
+    const handleJokeClick = async (jokeId) => {
+        await fetchJokeData({joke_id: jokeId});
+        navigate(`/joke?id=${jokeId}`);
     };
 
 
@@ -67,12 +69,12 @@ const JokeHistory = () => {
             alignItems: 'center',
             justifyContent: 'center',
             textAlign: 'center',
-            pt: '9rem',
+            pt: isSmallScreen ? '4rem' : '9rem',
         }}>
             <Typography variant="h3" color='text.primary'>
                 <strong>Історія</strong>
             </Typography>
-            <Box pt='2rem'>
+            <Box sx={{ pt: isSmallScreen ? '1rem' : '2rem' }}>
                 {jokes.map((joke, index) => {
                     const isLastJoke = jokes.length === index + 1;
 

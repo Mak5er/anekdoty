@@ -17,6 +17,9 @@ export const lightTheme = createTheme({
             secondary: '#878585',
 
         },
+        footer: {
+            default: '#e4e1e1',
+        },
     },
     typography: {
         fontFamily: 'Roboto, sans-serif',
@@ -38,6 +41,9 @@ export const darkTheme = createTheme({
         text: {
             primary: '#fafafa',
             secondary: '#878585',
+        },
+        footer: {
+            default: '#212339',
         },
     },
 

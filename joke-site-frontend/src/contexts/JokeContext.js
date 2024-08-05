@@ -8,7 +8,7 @@ import {
     handleVote,
     searchJokes
 } from '../utils/api';
-
+import {useNavigate} from "react-router-dom";
 
 const JokeContext = createContext();
 
@@ -21,51 +21,31 @@ export const JokeProvider = ({children}) => {
     const [searchResults, setSearchResults] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isJokeLoading, setIsJokeLoading] = useState(false);
+    const navigate = useNavigate();
 
-    const fetchJokeData = useCallback(async () => {
+    const fetchJokeData = useCallback(async ({joke_id = null, tag = null} = {}) => {
         setIsJokeLoading(true);
         try {
-            const jokeData = await fetchJoke();
+            let jokeData;
+            if (joke_id) {
+                jokeData = await fetchJokeById(joke_id);
+            } else if (tag) {
+                jokeData = await fetchJokeByCategory(tag);
+            } else {
+                jokeData = await fetchJoke();
+            }
             setJoke(jokeData);
+            navigate(`/joke?id=${jokeData.id}`)
             const votesData = await fetchVotes(jokeData.id);
             setVotes(votesData);
         } catch (error) {
             console.error("Failed to fetch joke data:", error);
         } finally {
-            setIsJokeLoading(false)
-        }
-    }, []);
-
-    const fetchJokeByIdData = useCallback(async (joke_id) => {
-        setIsJokeLoading(true);
-        try {
-            const jokeData = await fetchJokeById(joke_id);
-            setJoke(jokeData);
-            const votesData = await fetchVotes(jokeData.id);
-            setVotes(votesData);
-        } catch (error) {
-            console.error("Failed to fetch joke by id:", error);
-        } finally {
-              setIsJokeLoading(false);
-        }
-    }, []);
-
-    const fetchJokeByCategoryData = useCallback(async (tag) => {
-        setIsJokeLoading(true);
-        try {
-            const jokeData = await fetchJokeByCategory(tag);
-            setJoke(jokeData);
-            const votesData = await fetchVotes(jokeData.id);
-            setVotes(votesData);
-        } catch (error) {
-            console.error("Failed to fetch joke by id:", error);
-        } finally {
             setIsJokeLoading(false);
-
         }
-    }, []);
+    }, [navigate]);
 
-    const handleVoteData = useCallback (async (jokeId, voteType) => {
+    const handleVoteData = useCallback(async (jokeId, voteType) => {
         try {
             const response = await handleVote(jokeId, voteType);
             const votesData = await fetchVotes(jokeId);
@@ -109,8 +89,6 @@ export const JokeProvider = ({children}) => {
             isLoading,
             isJokeLoading,
             fetchJokeData,
-            fetchJokeByIdData,
-            fetchJokeByCategoryData,
             fetchVotes,
             searchJokesData,
             handleVoteData,
