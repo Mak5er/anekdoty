@@ -14,7 +14,7 @@ const UserDesktop = ({toggleTheme}) => {
         <Box sx={{display: {xs: 'none', md: 'flex'}, alignItems: 'center'}}>
             {user && (
                 <Box sx={{display: 'flex', alignItems: 'center'}}>
-                    <Typography variant="body1" color="text.primary" sx={{marginRight: '10px'}}>
+                    <Typography variant="body1" color="text.primary" sx={{marginRight: '10px', marginLeft: '10px'}}>
                         Hi, <Box component='span' color='primary.main'><strong>{user.name}</strong></Box>
                     </Typography>
                     <Avatar

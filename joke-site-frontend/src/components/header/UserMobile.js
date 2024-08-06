@@ -8,6 +8,7 @@ import {useUser} from "../../contexts/UserContext";
 const UserMobile = ({
                         handleSearchDialogOpen,
                         toggleTheme,
+                        searchOpen
                     }) => {
     const {user, logout} = useUser();
     const theme = useTheme();
@@ -25,31 +26,32 @@ const UserMobile = ({
     return (
         <>
             <Box sx={{display: {xs: 'flex', md: 'none'}, alignItems: 'center', marginRight: '10px'}}>
-                {user && (
+                {!searchOpen && (
                     <>
-                        <Typography variant="body1" color="text.primary" sx={{marginRight: '10px'}}>
-                            Hi, <Box component='span'
-                                     color='primary.main'><strong>{user.name}</strong></Box>
-                        </Typography>
+                        {user && (
+                            <Typography variant="body1" color="text.primary" sx={{marginRight: '10px'}}>
+                                Hi, <Box component='span'
+                                         color='primary.main'><strong>{user.name}</strong></Box>
+                            </Typography>
+                        )}
+                        <IconButton onClick={toggleTheme} color="inherit">
+                            {theme.palette.mode === 'dark' ? <LightMode/> : <DarkMode/>}
+                        </IconButton>
+                        {!user && (
+                            <Button component={Link} to="/login" variant='contained'>LogIn</Button>
+                        )}
+                        <IconButton
+                            edge="end"
+                            color="inherit"
+                            aria-label="menu"
+                            onClick={handleMenuClick}
+                            sx={{display: {xs: 'block', md: 'none'}}}
+                        >
+                            <MenuIcon/>
+                        </IconButton>
                     </>
                 )}
-                <IconButton onClick={toggleTheme} color="inherit">
-                    {theme.palette.mode === 'dark' ? <LightMode/> : <DarkMode/>}
-                </IconButton>
-                {!user && (
-                    <>
-                        <Button component={Link} to="/login" variant='contained'>LogIn</Button>
-                    </>
-                )}
-                <IconButton
-                    edge="end"
-                    color="inherit"
-                    aria-label="menu"
-                    onClick={handleMenuClick}
-                    sx={{display: {xs: 'block', md: 'none'}}}
-                >
-                    <MenuIcon/>
-                </IconButton>
+
                 <Menu
                     anchorEl={menuAnchorEl}
                     open={Boolean(menuAnchorEl)}
