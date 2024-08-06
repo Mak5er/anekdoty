@@ -12,7 +12,3 @@ html, body, #root {
 .content {
     flex: 1;
 }
-
-.MuiCollapse-wrapperInner {
-    flex-grow: 1;
-}
