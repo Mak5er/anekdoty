@@ -48,7 +48,11 @@ const SearchMenu = ({searchOpen, setSearchOpen}) => {
                 <SearchIcon/>
             </IconButton>
             <Box sx={{display: 'flex', flexGrow: 1}}>
-                <Grow in={searchOpen} style={{transformOrigin: 'left center'}}>
+                <Grow in={searchOpen} style={{
+                    transformOrigin: 'left center',
+                    width: searchOpen ? '100%' : 0,
+                    height: searchOpen ? '100%' : 0,
+                }}>
                     <InputBase
                         fullWidth
                         sx={{
