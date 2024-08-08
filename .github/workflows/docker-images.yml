@@ -26,44 +26,49 @@ jobs:
       - name: Build backend Docker image with commit SHA tag for multiple platforms
         run: |
           REPO_NAME="backend"
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           COMMIT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            -t ghcr.io/${{ github.repository }}/$REPO_NAME:${COMMIT_SHA} \
+            -t ghcr.io/${REPO_LOWER}/$REPO_NAME:${COMMIT_SHA} \
             --file ./backend/Dockerfile \
             --push .
 
       - name: Tag backend Docker image as latest for multiple platforms
         run: |
           REPO_NAME="backend"
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            -t ghcr.io/${{ github.repository }}/$REPO_NAME:latest \
+            -t ghcr.io/${REPO_LOWER}/$REPO_NAME:latest \
             --file ./backend/Dockerfile \
             --push .
 
       - name: Build frontend Docker image with commit SHA tag for multiple platforms
         run: |
           REPO_NAME="anekdoty-frontend"
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           COMMIT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            -t ghcr.io/${{ github.repository }}/$REPO_NAME:${COMMIT_SHA} \
+            -t ghcr.io/${REPO_LOWER}/$REPO_NAME:${COMMIT_SHA} \
             --file ./frontend/Dockerfile \
             --push .
 
       - name: Tag frontend Docker image as latest for multiple platforms
         run: |
           REPO_NAME="anekdoty-frontend"
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            -t ghcr.io/${{ github.repository }}/$REPO_NAME:latest \
+            -t ghcr.io/${REPO_LOWER}/$REPO_NAME:latest \
             --file ./frontend/Dockerfile \
             --push .
 
       - name: Output Docker image URLs
         run: |
-          echo "Backend Docker Image URL: ghcr.io/${{ github.repository }}/backend:${COMMIT_SHA}"
-          echo "Backend Docker Image URL: ghcr.io/${{ github.repository }}/backend:latest"
-          echo "Frontend Docker Image URL: ghcr.io/${{ github.repository }}/anekdoty-frontend:${COMMIT_SHA}"
-          echo "Frontend Docker Image URL: ghcr.io/${{ github.repository }}/anekdoty-frontend:latest"
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "Backend Docker Image URL: ghcr.io/${REPO_LOWER}/backend:${COMMIT_SHA}"
+          echo "Backend Docker Image URL: ghcr.io/${REPO_LOWER}/backend:latest"
+          echo "Frontend Docker Image URL: ghcr.io/${REPO_LOWER}/anekdoty-frontend:${COMMIT_SHA}"
+          echo "Frontend Docker Image URL: ghcr.io/${REPO_LOWER}/anekdoty-frontend:latest"
