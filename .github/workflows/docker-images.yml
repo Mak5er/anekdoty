@@ -30,7 +30,7 @@ jobs:
           COMMIT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            -t ghcr.io/${REPO_LOWER}/$REPO_NAME:${COMMIT_SHA} \
+            -t ghcr.io/${REPO_LOWER}-$REPO_NAME:${COMMIT_SHA} \
             --file ./backend/Dockerfile \
             --push .
 
@@ -40,7 +40,7 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            -t ghcr.io/${REPO_LOWER}/$REPO_NAME:latest \
+            -t ghcr.io/${REPO_LOWER}-$REPO_NAME:latest \
             --file ./backend/Dockerfile \
             --push .
 
@@ -51,7 +51,7 @@ jobs:
           COMMIT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            -t ghcr.io/${REPO_LOWER}/$REPO_NAME:${COMMIT_SHA} \
+            -t ghcr.io/${REPO_LOWER}-$REPO_NAME:${COMMIT_SHA} \
             --file ./frontend/Dockerfile \
             --push .
 
@@ -61,14 +61,14 @@ jobs:
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
-            -t ghcr.io/${REPO_LOWER}/$REPO_NAME:latest \
+            -t ghcr.io/${REPO_LOWER}-$REPO_NAME:latest \
             --file ./frontend/Dockerfile \
             --push .
 
       - name: Output Docker image URLs
         run: |
           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "Backend Docker Image URL: ghcr.io/${REPO_LOWER}/backend:${COMMIT_SHA}"
-          echo "Backend Docker Image URL: ghcr.io/${REPO_LOWER}/backend:latest"
-          echo "Frontend Docker Image URL: ghcr.io/${REPO_LOWER}/anekdoty-frontend:${COMMIT_SHA}"
-          echo "Frontend Docker Image URL: ghcr.io/${REPO_LOWER}/anekdoty-frontend:latest"
+          echo "Backend Docker Image URL: ghcr.io/${REPO_LOWER}-backend:${COMMIT_SHA}"
+          echo "Backend Docker Image URL: ghcr.io/${REPO_LOWER}-backend:latest"
+          echo "Frontend Docker Image URL: ghcr.io/${REPO_LOWER}-anekdoty-frontend:${COMMIT_SHA}"
+          echo "Frontend Docker Image URL: ghcr.io/${REPO_LOWER}-anekdoty-frontend:latest"
