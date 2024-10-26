@@ -29,6 +29,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
+print(origins)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
