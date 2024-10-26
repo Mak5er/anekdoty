@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+
 from google.auth.transport import requests
 from google.oauth2 import id_token
 from pydantic import BaseModel
@@ -27,6 +29,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+favicon_path = 'static/favicon.ico'
 
 app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
 print(origins)
@@ -327,3 +330,7 @@ async def search_jokes(query: str, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No jokes found")
 
     return [{"id": joke.id, "text": joke.text} for joke in jokes]
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return FileResponse(favicon_path)
