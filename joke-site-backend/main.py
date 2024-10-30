@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from starlette.middleware.sessions import SessionMiddleware
+
 
 from google.auth.transport import requests
 from google.oauth2 import id_token
@@ -29,7 +31,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
+
 favicon_path = 'static/favicon.ico'
+
+
 
 app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
 print(origins)

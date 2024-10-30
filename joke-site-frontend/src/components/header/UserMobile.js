@@ -78,12 +78,6 @@ const UserMobile = ({
                     <MenuItem component={Link} to="/history" onClick={handleMenuClose}>
                         <History sx={{marginRight: '10px'}}/> History
                     </MenuItem>
-                    <MenuItem onClick={() => {
-                        handleSearchDialogOpen();
-                        handleMenuClose();
-                    }}>
-                        <SearchIcon sx={{marginRight: '10px'}}/> Search
-                    </MenuItem>
 
                     {user && (
                         <>
