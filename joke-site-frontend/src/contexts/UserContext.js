@@ -51,7 +51,6 @@ export const UserProvider = ({children}) => {
                 const userData = await authenticateUser(response.credential);
                 setUser(userData);
                 navigate('/')
-                window.location.reload()
             } catch (error) {
                 console.error("Failed to authenticate:", error);
             }

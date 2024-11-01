@@ -1,12 +1,11 @@
 import React, {useState} from 'react';
 import {Avatar, Box, Button, Divider, IconButton, Menu, MenuItem, Typography, useTheme} from '@mui/material';
-import {DarkMode, History, Home, LightMode, Logout, Menu as MenuIcon, Search as SearchIcon} from '@mui/icons-material';
+import {DarkMode, History, Home, LightMode, Logout, Menu as MenuIcon} from '@mui/icons-material';
 import {Link} from 'react-router-dom';
 import {useUser} from "../../contexts/UserContext";
 
 
 const UserMobile = ({
-                        handleSearchDialogOpen,
                         toggleTheme,
                         searchOpen
                     }) => {
