@@ -1,5 +1,6 @@
 services:
   backend:
+    image: ghcr.io/mak5er/joke-site-backend
     build:
       context: ./joke-site-backend
     env_file:
@@ -9,6 +10,7 @@ services:
       - "8000:8000"
 
   frontend:
+    image: ghcr.io/mak5er/joke-site-frontend
     build:
       context: ./joke-site-frontend
     env_file:
