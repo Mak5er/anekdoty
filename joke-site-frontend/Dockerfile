@@ -4,12 +4,12 @@ WORKDIR /app
 
 COPY package*.json  ./
 
-RUN yarn
+RUN npm install
 
 COPY . .
 
-RUN yarn build
+RUN npm run build
 
-RUN yarn global add serve
+RUN npm install -g serve
 
 ENTRYPOINT ["serve", "-s", "build", "-l", "3000"]
